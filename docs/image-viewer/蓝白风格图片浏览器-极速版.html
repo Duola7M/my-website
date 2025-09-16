@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>蓝白图片浏览器 - 极速版</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #f0f8ff 0%, #e6f7ff 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #2c3e50;
+        }
+
+        .top-button {
+            position: fixed;
+            z-index: 1000;
+            padding: 10px 16px;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-family: '微软雅黑', sans-serif;
+            font-size: 14px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(33, 150, 243, 0.2);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .top-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+        }
+
+        #backButton {
+            top: 20px;
+            left: 20px;
+            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+        }
+
+        #layoutButton {
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 20px 0;
+        }
+
+        h1 {
+            color: #1a73e8;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #5f7d9c;
+            font-size: 1.1rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(66, 133, 244, 0.15);
+            overflow: hidden;
+            margin-bottom: 30px;
+            transition: transform 0.3s ease;
+        }
+
+        .folder-selector {
+            padding: 30px;
+            text-align: center;
+            background: linear-gradient(to right, #4285f4, #1a73e8);
+            color: white;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            margin: 20px  0;
+        }
+
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .custom-file-btn {
+            display: inline-block;
+            padding: 15px 30px;
+            background: white;
+            color: #4285f4;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 15px rgba(66, 133, 244, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .custom-file-btn:hover {
+            background: #f8f9fa;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(66, 133, 244, 0.4);
+        }
+        
+        .file-info {
+            margin-top: 15px;
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        #imageContainer {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            padding: 25px;
+        }
+
+        .folder-group {
+            background: #f8fbff;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 4px 12px rgba(66, 133, 244, 0.1);
+        }
+
+        .folder-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e3f2fd;
+        }
+
+        .folder-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 10px;
+            fill: #1a73e8;
+        }
+
+        .folder-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #1a73e8;
+        }
+
+        .group-images {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .image-item {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(66, 133, 244, 0.2);
+            transition: all 0.3s ease;
+            background: white;
+            position: relative;
+            min-height: 240px;
+            cursor: pointer;
+        }
+
+        .image-item:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 25px rgba(66, 133, 244, 0.3);
+        }
+
+        .image-item img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .image-name {
+            padding: 12px;
+            text-align: center;
+            background: #f0f8ff;
+            color: #1a73e8;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .image-loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+        }
+
+        .image-loading::after {
+            content: "";
+            display: block;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 3px solid #e3f2fd;
+            border-color: #e3f2fd transparent #e3f2fd transparent;
+            animation: loading 1.2s linear infinite;
+        }
+
+        @keyframes loading {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .no-images {
+            text-align: center;
+            padding: 50px;
+            color: #5f7d9c;
+            font-size: 1.2rem;
+            grid-column: 1 / -1;
+        }
+
+        .image-count {
+            text-align: center;
+            padding: 15px;
+            color: #1a73e8;
+            font-weight: 600;
+            font-size: 1.1rem;
+            background: rgba(26, 115, 232, 0.05);
+            border-radius: 0 0 16px 16px;
+        }
+
+        .folder-count {
+            margin-top: 5px;
+            font-size: 0.9rem;
+            color: #5f7d9c;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #5f7d9c;
+            font-size: 0.9rem;
+            margin-top: 30px;
+        }
+
+        .zoom-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease;
+        }
+
+        .zoom-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .zoom-image-container {
+            max-width: 90%;
+            max-height: 90%;
+            position: relative;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .zoom-image {
+            max-width: 100%;
+            max-height: 80vh;
+            display: block;
+        }
+
+        .zoom-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .zoom-close::before, .zoom-close::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 2px;
+            background: #1a73e8;
+        }
+
+        .zoom-close::before {
+            transform: rotate(45deg);
+        }
+
+        .zoom-close::after {
+            transform: rotate(-45deg);
+        }
+
+        .zoom-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1001;
+        }
+
+        .zoom-prev {
+            left: 20px;
+        }
+
+        .zoom-next {
+            right: 20px;
+        }
+
+        .zoom-counter {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.8);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            color: #1a73e8;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .group-images {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            }
+            
+            .zoom-nav {
+                width: 40px;
+                height: 40px;
+            }
+            
+            .zoom-prev {
+                left: 10px;
+            }
+            
+            .zoom-next {
+                right: 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .group-images {
+                grid-template-columns: 1fr;
+            }
+            
+            .custom-file-btn {
+                padding: 12px 25px;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button id="backButton" class="top-button">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+        </svg>
+        返回主页
+    </button>
+    
+    <button id="layoutButton" class="top-button">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h3A1.5 1.5 0 0 1 7 2.5v3A1.5 1.5 0 0 1 5.5 7h-3A1.5 1.5 0 0 1 1 5.5v-3zM2.5 2a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3zm6.5.5A1.5 1.5 0 0 1 10.5 1h3A1.5 1.5 0 0 1 15 2.5v3A1.5 1.5 0 0 1 13.5 7h-3A1.5 1.5 0 0 1 9 5.5v-3zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3zM1 10.5A1.5 1.5 0 0 1 2.5 9h3A1.5 1.5 0 0 1 7 10.5v3A1.5 1.5 0 0 1 5.5 15h-3A1.5 1.5 0 0 1 1 13.5v-3zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3zm6.5.5A1.5 1.5 0 0 1 10.5 9h3a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 9 13.5v-3zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3z"/>
+        </svg>
+        布局设置
+    </button>
+
+    <div class="container">
+        <header>
+            <h1>蓝白图片浏览器</h1>
+            <p class="subtitle">极速浏览本地文件夹中的图片</p>
+        </header>
+        
+        <div class="card">
+            <div class="folder-selector">
+                <div class="file-input-wrapper">
+                    <input type="file" 
+                           id="folderInput" 
+                           webkitdirectory 
+                           directory 
+                           multiple 
+                           accept="image/*"
+                           required>
+                    <div class="custom-file-btn">选择图片文件夹</div>
+                </div>
+                <p class="file-info">支持 JPG, PNG, GIF, WEBP 等常见图片格式 | 自动识别子文件夹中的图片</p>
+            </div>
+            
+            <div id="imageContainer">
+                <div class="no-images">请选择文件夹查看图片</div>
+            </div>
+            
+            <div class="image-count" id="imageCount">0 张图片</div>
+            <div class="folder-count" id="folderCount">0 个子文件夹</div>
+        </div>
+        
+        <footer>
+            <p>© 2023 蓝白图片浏览器 | 使用现代浏览器以获得最佳体验</p>
+        </footer>
+    </div>
+    
+    <div class="zoom-overlay" id="zoomOverlay">
+        <div class="zoom-nav zoom-prev" id="zoomPrev">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+            </svg>
+        </div>
+        
+        <div class="zoom-image-container">
+            <img class="zoom-image" id="zoomImage" src="" alt="放大预览">
+            <div class="zoom-close" id="zoomClose"></div>
+            <div class="zoom-counter" id="zoomCounter"></div>
+        </div>
+        
+        <div class="zoom-nav zoom-next" id="zoomNext">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+            </svg>
+        </div>
+    </div>
+
+    <script>
+        // 初始化所有DOM元素引用
+        const folderInput = document.getElementById('folderInput');
+        const imageContainer = document.getElementById('imageContainer');
+        const imageCount = document.getElementById('imageCount');
+        const folderCount = document.getElementById('folderCount');
+        const zoomOverlay = document.getElementById('zoomOverlay');
+        const zoomImage = document.getElementById('zoomImage');
+        const zoomClose = document.getElementById('zoomClose');
+        const zoomPrev = document.getElementById('zoomPrev');
+        const zoomNext = document.getElementById('zoomNext');
+        const zoomCounter = document.getElementById('zoomCounter');
+        const backButton = document.getElementById('backButton');
+        
+        // 用于存储所有图片数据
+        let allImagesData = [];
+        let currentImageIndex = 0;
+        let currentFolderImages = [];
+        
+        // 初始化事件监听器
+        function initEventListeners() {
+            // 返回按钮功能
+            backButton.addEventListener('click', () => {
+                resetBrowser();
+            });
+            
+            // 关闭悬浮放大层
+            zoomClose.addEventListener('click', () => {
+                zoomOverlay.classList.remove('active');
+            });
+            
+            // 点击悬浮层任意位置关闭
+            zoomOverlay.addEventListener('click', (e) => {
+                if (e.target === zoomOverlay) {
+                    zoomOverlay.classList.remove('active');
+                }
+            });
+            
+            // 上一张图片
+            zoomPrev.addEventListener('click', () => {
+                if (currentImageIndex > 0) {
+                    currentImageIndex--;
+                    showZoomImage();
+                }
+            });
+            
+            // 下一张图片
+            zoomNext.addEventListener('click', () => {
+                if (currentImageIndex < currentFolderImages.length - 1) {
+                    currentImageIndex++;
+                    showZoomImage();
+                }
+            });
+            
+            // 文件夹选择事件
+            folderInput.addEventListener('change', handleFolderSelect);
+            
+            // 键盘导航支持
+            document.addEventListener('keydown', handleKeydown);
+        }
+        
+        // 重置浏览器
+        function resetBrowser() {
+            imageContainer.innerHTML = '<div class="no-images">请选择文件夹查看图片</div>';
+            imageCount.textContent = '0 张图片';
+            folderCount.textContent = '0 个子文件夹';
+            folderInput.value = '';
+            allImagesData = [];
+        }
+        
+        // 处理文件夹选择
+        function handleFolderSelect(e) {
+            // 清空现有内容
+            imageContainer.innerHTML = '';
+            allImagesData = [];
+            
+            const files = Array.from(e.target.files);
+            
+            // 过滤非图片文件
+            const imageFiles = files.filter(file => 
+                file.type.startsWith('image/')
+            );
+            
+            // 按文件夹分组图片
+            const folderGroups = {};
+            const folders = new Set();
+            
+            imageFiles.forEach(file => {
+                let folderPath = '';
+                if (file.webkitRelativePath) {
+                    const pathParts = file.webkitRelativePath.split('/');
+                    if (pathParts.length > 1) {
+                        // 获取所有父级文件夹
+                        let currentPath = '';
+                        for (let i = 0; i < pathParts.length - 1; i++) {
+                            currentPath += (currentPath ? '/' : '') + pathParts[i];
+                            folders.add(currentPath);
+                        }
+                        folderPath = pathParts.slice(0, -1).join('/');
+                    }
+                }
+                
+                if (!folderGroups[folderPath]) {
+                    folderGroups[folderPath] = [];
+                }
+                folderGroups[folderPath].push(file);
+            });
+            
+            // 更新图片计数
+            imageCount.textContent = `${imageFiles.length} 张图片`;
+            folderCount.textContent = `${folders.size} 个子文件夹`;
+            
+            if (imageFiles.length === 0) {
+                imageContainer.innerHTML = '<div class="no-images">文件夹中没有找到图片文件</div>';
+                return;
+            }
+            
+            // 按文件夹路径排序（根目录在最前）
+            const sortedFolderPaths = Object.keys(folderGroups).sort((a, b) => {
+                if (a === '') return -1; // 根目录在最前
+                if (b === '') return 1;
+                return a.localeCompare(b);
+            });
+            
+            // 创建文件夹分组容器
+            sortedFolderPaths.forEach(folderPath => {
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'folder-group';
+                
+                // 创建文件夹标题
+                const headerDiv = document.createElement('div');
+                headerDiv.className = 'folder-header';
+                
+                // 文件夹图标
+                const folderIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                folderIcon.setAttribute('class', 'folder-icon');
+                folderIcon.setAttribute('viewBox', '0 0 24 24');
+                folderIcon.innerHTML = `
+                    <path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/>
+                `;
+                
+                const folderName = document.createElement('div');
+                folderName.className = 'folder-name';
+                folderName.textContent = folderPath || '根目录';
+                
+                headerDiv.appendChild(folderIcon);
+                headerDiv.appendChild(folderName);
+                groupDiv.appendChild(headerDiv);
+                
+                // 创建图片容器
+                const imagesContainer = document.createElement('div');
+                imagesContainer.className = 'group-images';
+                
+                // 按文件名排序图片
+                folderGroups[folderPath].sort((a, b) => a.name.localeCompare(b.name));
+                
+                // 添加图片到容器
+                folderGroups[folderPath].forEach((file, index) => {
+                    const imageItem = document.createElement('div');
+                    imageItem.className = 'image-item';
+                    
+                    // 创建图片元素
+                    const img = document.createElement('img');
+                    img.alt = file.name;
+                    
+                    // 创建加载动画
+                    const loadingDiv = document.createElement('div');
+                    loadingDiv.className = 'image-loading';
+                    
+                    // 使用FileReader读取图片
+                    const reader = new FileReader();
+                    
+                    reader.onload = (event) => {
+                        // 存储图片数据
+                        const imageData = {
+                            url: event.target.result,
+                            name: file.name,
+                            folder: folderPath,
+                            index: index
+                        };
+                        allImagesData.push(imageData);
+                        
+                        // 设置图片源
+                        img.src = event.target.result;
+                        
+                        // 移除加载动画
+                        loadingDiv.remove();
+                        
+                        // 添加点击事件
+                        img.addEventListener('click', () => {
+                            // 获取当前文件夹的所有图片
+                            currentFolderImages = allImagesData.filter(imgData => imgData.folder === folderPath);
+                            // 找到当前点击的图片索引
+                            currentImageIndex = currentFolderImages.findIndex(imgData => imgData.url === event.target.result);
+                            
+                            zoomOverlay.classList.add('active');
+                            
+                            // 显示图片计数
+                            showZoomImage();
+                        });
+                    };
+
+                    // 处理读取错误
+                    reader.onerror = () => {
+                        loadingDiv.remove();
+                        console.error('读取文件失败:', file.name);
+                    };
+                    
+                    reader.readAsDataURL(file);
+                    
+                    const nameDiv = document.createElement('div');
+                    nameDiv.className = 'image-name';
+                    nameDiv.textContent = file.name;
+                    
+                    imageItem.appendChild(loadingDiv);
+                    imageItem.appendChild(img);
+                    imageItem.appendChild(nameDiv);
+                    imagesContainer.appendChild(imageItem);
+                });
+                
+                groupDiv.appendChild(imagesContainer);
+                imageContainer.appendChild(groupDiv);
+            });
+        }
+        
+        // 显示放大图片
+        function showZoomImage() {
+            if (currentFolderImages.length === 0) return;
+            
+            const imageData = currentFolderImages[currentImageIndex];
+            
+            // 添加加载动画
+            zoomImage.style.opacity = '0';
+            
+            // 使用setTimeout确保动画效果
+            setTimeout(() => {
+                zoomImage.src = imageData.url;
+                zoomCounter.textContent = `${currentImageIndex + 1} / ${currentFolderImages.length}`;
+                
+                // 图片加载完成后显示
+                zoomImage.onload = function() {
+                    zoomImage.style.opacity = '1';
+                };
+            }, 50);
+            
+            // 更新按钮状态
+            zoomPrev.classList.toggle('disabled', currentImageIndex === 0);
+            zoomNext.classList.toggle('disabled', currentImageIndex === currentFolderImages.length - 1);
+        }
+        
+        // 键盘导航处理
+        function handleKeydown(e) {
+            if (zoomOverlay.classList.contains('active')) {
+                if (e.key === 'ArrowLeft') {
+                    // 上一张
+                    if (currentImageIndex > 0) {
+                        currentImageIndex--;
+                        showZoomImage();
+                    }
+                } else if (e.key === 'ArrowRight') {
+                    // 下一张
+                    if (currentImageIndex < currentFolderImages.length - 1) {
+                        currentImageIndex++;
+                        showZoomImage();
+                    }
+                } else if (e.key === 'Escape') {
+                    // 关闭
+                    zoomOverlay.classList.remove('active');
+                }
+            }
+        }
+        
+        // 初始化应用
+        function initApp() {
+            initEventListeners();
+        }
+        
+        // 启动应用
+        initApp();
+    </script>
+</body>
+</html>

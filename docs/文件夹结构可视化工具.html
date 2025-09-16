@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文件夹结构可视化工具</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 90vh;
+        }
+        
+        header {
+            padding: 25px 30px;
+            background: linear-gradient(90deg, #3498db, #2ecc71);
+            color: white;
+        }
+        
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .description {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .sidebar {
+            width: 35%;
+            padding: 20px;
+            border-right: 1px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .folder-input {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        #folder-selector {
+            display: none;
+        }
+        
+        .select-button {
+            background: linear-gradient(to right, #3498db, #2ecc71);
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .select-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+        }
+        
+        .tree-container {
+            flex: 1;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow-y: auto;
+            background-color: #f9f9f9;
+            padding: 15px;
+        }
+        
+        .path-display {
+            margin: 15px 0;
+            padding: 12px 15px;
+            background-color: #e1f5fe;
+            border-radius: 6px;
+            font-family: monospace;
+            word-break: break-all;
+            border-left: 4px solid #029be5;
+        }
+        
+        .stats {
+            display: flex;
+            gap: 15px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+        
+        .stat-item {
+            background: #f3f7fd;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 0.9em;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .stat-item span {
+            font-weight: bold;
+            color: #2980b9;
+        }
+        
+        .preview-container {
+            flex: 1;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .preview-title {
+            font-size: 1.5rem;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .preview-content {
+            flex: 1;
+            overflow: auto;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            background: #f9f9f9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .preview-placeholder {
+            text-align: center;
+            color: #95a5a6;
+        }
+        
+        .preview-placeholder i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #3498db;
+        }
+        
+        .preview-image {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        
+        .preview-text {
+            white-space: pre-wrap;
+            font-family: monospace;
+            line-height: 1.6;
+            width: 100%;
+            overflow: auto;
+        }
+        
+        .file-info {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f3f7fd;
+            border-radius: 8px;
+            font-size: 0.9em;
+        }
+        
+        .file-info div {
+            margin-bottom: 8px;
+            display: flex;
+        }
+        
+        .file-info .label {
+            font-weight: bold;
+            min-width: 100px;
+            color: #2c3e50;
+        }
+        
+        /* 树形结构样式 */
+        .tree {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        
+        .tree, .tree ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .tree li {
+            margin: 0;
+            padding: 4px 5px 4px 20px;
+            position: relative;
+        }
+        
+        .tree li:before {
+            content: "";
+            position: absolute;
+            top: 14px;
+            left: 5px;
+            width: 12px;
+            height: 1px;
+            background: #aaa;
+        }
+        
+        .tree li:after {
+            content: "";
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 5px;
+            width: 1px;
+            background: #aaa;
+        }
+        
+        .tree li:last-child:after {
+            height: 14px;
+        }
+        
+        .tree .folder, .tree .file {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            padding: 8px 10px;
+            border-radius: 4px;
+            transition: all 0.2s;
+            margin: 2px 0;
+        }
+        
+        .tree .folder:hover, .tree .file:hover {
+            background-color: #e3f2fd;
+        }
+        
+        .tree .folder i {
+            margin-right: 8px;
+            color: #ffc107;
+        }
+        
+        .tree .file i {
+            margin-right: 8px;
+            color: #3498db;
+        }
+        
+        .tree .empty {
+            color: #95a5a6;
+            font-style: italic;
+        }
+        
+        .tree ul {
+            margin-left: 24px;
+            display: none;
+        }
+        
+        .tree .open > ul {
+            display: block;
+        }
+        
+        .tree .folder.open i {
+            color: #ff9800;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 30px;
+            color: #7f8c8d;
+            font-size: 1.1em;
+        }
+        
+        .loading::after {
+            content: "";
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(52, 152, 219, 0.3);
+            border-radius: 50%;
+            border-top-color: #3498db;
+            animation: spin 1s ease-in-out infinite;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .no-content {
+            text-align: center;
+            padding: 30px;
+            color: #95a5a6;
+            font-style: italic;
+            font-size: 1.1em;
+        }
+        
+        footer {
+            padding: 20px;
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 0.9em;
+            border-top: 1px solid #eee;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 900px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid #e0e0e0;
+            }
+            
+            .preview-container {
+                width: 100%;
+            }
+        }
+        
+        .unsupported-file {
+            padding: 30px;
+            text-align: center;
+            color: #95a5a6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-folder-tree"></i> 文件夹结构可视化工具</h1>
+            <p class="description">选择本地文件夹，浏览其结构并预览文件内容</p>
+        </header>
+        
+        <div class="main-content">
+            <div class="sidebar">
+                <div class="folder-input">
+                    <input type="file" id="folder-selector" webkitdirectory directory multiple>
+                    <button class="select-button" id="select-folder">
+                        <i class="fas fa-folder-open"></i> 选择文件夹
+                    </button>
+                </div>
+                
+                <div id="path-display" class="path-display" style="display: none;">
+                    <i class="fas fa-folder"></i> 当前路径: <span id="current-path"></span>
+                </div>
+                
+                <div class="stats" id="stats" style="display: none;">
+                    <div class="stat-item">
+                        <i class="fas fa-folder"></i> 文件夹: <span id="folders-count">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-file"></i> 文件: <span id="files-count">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-list"></i> 总计: <span id="total-count">0</span>
+                    </div>
+                </div>
+                
+                <div class="tree-container">
+                    <div id="loading" class="loading" style="display: none;">正在读取文件夹结构</div>
+                    <div id="no-content" class="no-content">请选择一个文件夹</div>
+                    <div id="tree-content" style="display: none;">
+                        <ul class="tree" id="file-tree"></ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="preview-container">
+                <div class="preview-header">
+                    <h2 class="preview-title"><i class="fas fa-file-alt"></i> 文件预览</h2>
+                </div>
+                
+                <div class="preview-content" id="preview-content">
+                    <div class="preview-placeholder">
+                        <i class="fas fa-file-image"></i>
+                        <p>选择文件进行预览<br>支持 JPG, PNG, TXT, MD 等格式</p>
+                    </div>
+                </div>
+                
+                <div class="file-info" id="file-info" style="display: none;">
+                    <div>
+                        <span class="label">文件名:</span>
+                        <span id="file-name"></span>
+                    </div>
+                    <div>
+                        <span class="label">类型:</span>
+                        <span id="file-type"></span>
+                    </div>
+                    <div>
+                        <span class="label">大小:</span>
+                        <span id="file-size"></span>
+                    </div>
+                    <div>
+                        <span class="label">修改时间:</span>
+                        <span id="file-modified"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>提示: 点击文件夹图标可以展开或折叠内容 | 点击文件可以预览内容</p>
+            <p>基于HTML5 File API实现 | 仅在现代浏览器中可用</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const folderSelector = document.getElementById('folder-selector');
+            const selectButton = document.getElementById('select-folder');
+            const loadingElement = document.getElementById('loading');
+            const noContentElement = document.getElementById('no-content');
+            const treeContentElement = document.getElementById('tree-content');
+            const fileTreeElement = document.getElementById('file-tree');
+            const pathDisplay = document.getElementById('path-display');
+            const currentPathElement = document.getElementById('current-path');
+            const statsElement = document.getElementById('stats');
+            const foldersCountElement = document.getElementById('folders-count');
+            const filesCountElement = document.getElementById('files-count');
+            const totalCountElement = document.getElementById('total-count');
+            const previewContentElement = document.getElementById('preview-content');
+            const fileInfoElement = document.getElementById('file-info');
+            const fileNameElement = document.getElementById('file-name');
+            const fileTypeElement = document.getElementById('file-type');
+            const fileSizeElement = document.getElementById('file-size');
+            const fileModifiedElement = document.getElementById('file-modified');
+            
+            let fileMap = new Map(); // 存储文件路径对应的File对象
+            
+            // 点击按钮触发文件夹选择
+            selectButton.addEventListener('click', function() {
+                folderSelector.click();
+            });
+            
+            // 处理文件夹选择
+            folderSelector.addEventListener('change', function(event) {
+                const files = event.target.files;
+                if (!files.length) return;
+                
+                // 显示加载状态
+                loadingElement.style.display = 'block';
+                noContentElement.style.display = 'none';
+                treeContentElement.style.display = 'none';
+                pathDisplay.style.display = 'none';
+                statsElement.style.display = 'none';
+                fileInfoElement.style.display = 'none';
+                
+                // 重置预览区域
+                previewContentElement.innerHTML = `
+                    <div class="preview-placeholder">
+                        <i class="fas fa-file-image"></i>
+                        <p>选择文件进行预览<br>支持 JPG, PNG, TXT, MD 等格式</p>
+                    </div>
+                `;
+                
+                // 获取文件夹路径（从第一个文件的路径中提取）
+                const firstFilePath = files[0].webkitRelativePath;
+                const folderPath = firstFilePath.substring(0, firstFilePath.indexOf('/'));
+                currentPathElement.textContent = folderPath;
+                
+                // 清空文件映射
+                fileMap.clear();
+                
+                // 延迟处理以便显示加载状态
+                setTimeout(() => {
+                    // 构建文件树结构
+                    const fileTree = buildFileTree(files);
+                    
+                    // 渲染文件树
+                    renderFileTree(fileTree, fileTreeElement);
+                    
+                    // 计算统计信息
+                    const counts = countItems(fileTree);
+                    foldersCountElement.textContent = counts.folders;
+                    filesCountElement.textContent = counts.files;
+                    totalCountElement.textContent = counts.folders + counts.files;
+                    
+                    // 显示结果
+                    loadingElement.style.display = 'none';
+                    treeContentElement.style.display = 'block';
+                    pathDisplay.style.display = 'block';
+                    statsElement.style.display = 'flex';
+                }, 500);
+            });
+            
+            // 构建文件树结构
+            function buildFileTree(files) {
+                const root = {};
+                
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    const pathParts = file.webkitRelativePath.split('/');
+                    
+                    // 存储文件路径对应的File对象
+                    fileMap.set(file.webkitRelativePath, file);
+                    
+                    let currentLevel = root;
+                    
+                    for (let j = 0; j < pathParts.length; j++) {
+                        const part = pathParts[j];
+                        
+                        if (j === pathParts.length - 1) {
+                            // 这是文件
+                            currentLevel[part] = file;
+                        } else {
+                            // 这是文件夹
+                            if (!currentLevel[part]) {
+                                currentLevel[part] = {};
+                            }
+                            currentLevel = currentLevel[part];
+                        }
+                    }
+                }
+                
+                return root;
+            }
+            
+            // 渲染文件树
+            function renderFileTree(tree, container) {
+                container.innerHTML = '';
+                
+                if (Object.keys(tree).length === 0) {
+                    const emptyItem = document.createElement('li');
+                    emptyItem.textContent = '空文件夹';
+                    emptyItem.className = 'empty';
+                    container.appendChild(emptyItem);
+                    return;
+                }
+                
+                for (const key in tree) {
+                    if (tree.hasOwnProperty(key)) {
+                        const item = tree[key];
+                        const isDirectory = typeof item === 'object' && !(item instanceof File);
+                        
+                        const listItem = document.createElement('li');
+                        
+                        if (isDirectory) {
+                            const folderSpan = document.createElement('span');
+                            folderSpan.className = 'folder';
+                            folderSpan.innerHTML = `<i class="fas fa-folder"></i> ${key}`;
+                            
+                            const nestedList = document.createElement('ul');
+                            renderFileTree(item, nestedList);
+                            
+                            // 添加点击事件以展开/折叠文件夹
+                            folderSpan.addEventListener('click', function(e) {
+                                e.stopPropagation();
+                                this.classList.toggle('open');
+                                
+                                // 切换子列表的显示
+                                if (this.classList.contains('open')) {
+                                    nestedList.style.display = 'block';
+                                    this.querySelector('i').className = 'fas fa-folder-open';
+                                } else {
+                                    nestedList.style.display = 'none';
+                                    this.querySelector('i').className = 'fas fa-folder';
+                                }
+                            });
+                            
+                            listItem.appendChild(folderSpan);
+                            listItem.appendChild(nestedList);
+                        } else {
+                            const fileSpan = document.createElement('span');
+                            fileSpan.className = 'file';
+                            
+                            // 根据文件类型设置图标
+                            const fileExtension = key.split('.').pop().toLowerCase();
+                            let iconClass = 'fa-file';
+                            
+                            if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(fileExtension)) {
+                                iconClass = 'fa-file-image';
+                            } else if (['txt', 'md', 'log'].includes(fileExtension)) {
+                                iconClass = 'fa-file-alt';
+                            } else if (['pdf'].includes(fileExtension)) {
+                                iconClass = 'fa-file-pdf';
+                            } else if (['doc', 'docx'].includes(fileExtension)) {
+                                iconClass = 'fa-file-word';
+                            } else if (['xls', 'xlsx'].includes(fileExtension)) {
+                                iconClass = 'fa-file-excel';
+                            } else if (['zip', 'rar', '7z'].includes(fileExtension)) {
+                                iconClass = 'fa-file-archive';
+                            } else if (['mp3', 'wav', 'ogg'].includes(fileExtension)) {
+                                iconClass = 'fa-file-audio';
+                            } else if (['mp4', 'avi', 'mov', 'wmv'].includes(fileExtension)) {
+                                iconClass = 'fa-file-video';
+                            } else if (['js'].includes(fileExtension)) {
+                                iconClass = 'fa-file-code';
+                            } else if (['html', 'htm'].includes(fileExtension)) {
+                                iconClass = 'fa-file-code';
+                            } else if (['css'].includes(fileExtension)) {
+                                iconClass = 'fa-file-code';
+                            }
+                            
+                            fileSpan.innerHTML = `<i class="fas ${iconClass}"></i> ${key}`;
+                            fileSpan.title = `大小: ${formatFileSize(item.size)}`;
+                            
+                            // 添加文件点击事件
+                            fileSpan.addEventListener('click', function(e) {
+                                e.stopPropagation();
+                                previewFile(item);
+                            });
+                            
+                            listItem.appendChild(fileSpan);
+                        }
+                        
+                        container.appendChild(listItem);
+                    }
+                }
+            }
+            
+            // 预览文件
+            function previewFile(file) {
+                // 显示文件信息
+                fileNameElement.textContent = file.name;
+                fileTypeElement.textContent = file.type || '未知类型';
+                fileSizeElement.textContent = formatFileSize(file.size);
+                fileModifiedElement.textContent = new Date(file.lastModified).toLocaleString();
+                fileInfoElement.style.display = 'block';
+                
+                const fileExtension = file.name.split('.').pop().toLowerCase();
+                
+                // 根据文件类型进行预览
+                if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(fileExtension)) {
+                    // 图片预览
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewContentElement.innerHTML = `<img src="${e.target.result}" class="preview-image" alt="${file.name}">`;
+                    };
+                    reader.readAsDataURL(file);
+                } 
+                else if (['txt', 'md', 'json', 'xml', 'html', 'css', 'js', 'log'].includes(fileExtension)) {
+                    // 文本文件预览
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewContentElement.innerHTML = `<pre class="preview-text">${e.target.result}</pre>`;
+                    };
+                    reader.readAsText(file);
+                }
+                else {
+                    // 不支持预览的文件类型
+                    previewContentElement.innerHTML = `
+                        <div class="unsupported-file">
+                            <i class="fas fa-file fa-3x"></i>
+                            <p>不支持预览此文件类型</p>
+                            <p>文件类型: ${file.type || '未知'}</p>
+                        </div>
+                    `;
+                }
+            }
+            
+            // 格式化文件大小
+            function formatFileSize(bytes) {
+                if (bytes < 1024) return bytes + ' B';
+                else if (bytes < 1048576) return (bytes / 1024).toFixed(2) + ' KB';
+                else return (bytes / 1048576).toFixed(2) + ' MB';
+            }
+            
+            // 计算文件夹和文件数量
+            function countItems(tree) {
+                let folders = 0;
+                let files = 0;
+                
+                for (const key in tree) {
+                    if (tree.hasOwnProperty(key)) {
+                        const item = tree[key];
+                        const isDirectory = typeof item === 'object' && !(item instanceof File);
+                        
+                        if (isDirectory) {
+                            folders++;
+                            const counts = countItems(item);
+                            folders += counts.folders;
+                            files += counts.files;
+                        } else {
+                            files++;
+                        }
+                    }
+                }
+                
+                return { folders, files };
+            }
+        });
+    </script>
+</body>
+</html>
