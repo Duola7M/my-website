@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZIP图片浏览器 - 优化版</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            /* background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); */
+            background: url('../images/background2.jpg') center center/cover no-repeat;
+            min-height: 100vh;
+            padding: 20px;
+            color: #2c3e50;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #1a73e8;
+            background: linear-gradient(135deg, #1a73e8 0%, #6c8ef5 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .subtitle {
+            color: #5f6368;
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        
+        .upload-container {
+            background-color: white;
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+            border: 2px dashed #1a73e8;
+        }
+        
+        .upload-container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+        
+        .drop-area {
+            border: 3px dashed #1a73e8;
+            border-radius: 8px;
+            padding: 40px 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+            background: rgba(26, 115, 232, 0.05);
+        }
+        
+        .drop-area:hover, .drop-area.dragover {
+            background-color: rgba(26, 115, 232, 0.1);
+            border-color: #1557b7;
+        }
+        
+        .drop-area i {
+            font-size: 48px;
+            color: #1a73e8;
+            margin-bottom: 15px;
+            display: block;
+        }
+        
+        .drop-area p {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #1a73e8;
+            font-weight: 600;
+        }
+        
+        .drop-area span {
+            font-size: 14px;
+            color: #5f6368;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .browse-btn {
+            background: linear-gradient(135deg, #1a73e8 0%, #6c8ef5 100%);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin-top: 15px;
+            display: inline-block;
+            box-shadow: 0 4px 8px rgba(26, 115, 232, 0.3);
+        }
+        
+        .browse-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(26, 115, 232, 0.4);
+        }
+        
+        .gallery-container {
+            display: none;
+            background-color: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+        
+        .gallery-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eaeaea;
+        }
+        
+        .gallery-title {
+            font-size: 1.5rem;
+            color: #1a73e8;
+            display: flex;
+            align-items: center;
+        }
+        
+        .gallery-title i {
+            margin-right: 10px;
+        }
+        
+        .back-btn {
+            background: linear-gradient(135deg, #1a73e8 0%, #6c8ef5 100%);
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 8px rgba(26, 115, 232, 0.3);
+        }
+        
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(26, 115, 232, 0.4);
+        }
+        
+        .image-counter {
+            color: #5f6368;
+            font-size: 14px;
+            margin-bottom: 20px;
+            text-align: center;
+            padding: 8px;
+            background: rgba(26, 115, 232, 0.1);
+            border-radius: 5px;
+        }
+        
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .thumbnail {
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: transform 0.3s;
+            aspect-ratio: 1;
+            background-color: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .thumbnail:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: opacity 0.3s;
+        }
+        
+        .thumbnail .thumbnail-loading {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #1a73e8;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.95);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        
+        .modal-header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        
+        .modal-title {
+            color: white;
+            font-size: 1.2rem;
+            max-width: 70%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .modal-close {
+            color: white;
+            font-size: 30px;
+            cursor: pointer;
+            transition: color 0.3s;
+            background: rgba(0, 0, 0, 0.5);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-close:hover {
+            color: #ff5252;
+        }
+        
+        .modal-content {
+            max-width: 90%;
+            max-height: 80%;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-image-container {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-width: 300px;
+            min-height: 200px;
+        }
+        
+        .modal-content img {
+            max-width: 100%;
+            max-height: 80vh;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            opacity: 1;
+            transition: opacity 0.3s;
+        }
+        
+        .modal-content img.loading {
+            opacity: 0;
+        }
+        
+        .modal-loading {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255, 255, 255, 0.2);
+            border-top: 5px solid #1a73e8;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+        
+        .modal-nav {
+            position: absolute;
+            top: 50%;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            transform: translateY(-50%);
+            padding: 0 20px;
+        }
+        
+        .nav-btn {
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+        }
+        
+        .nav-btn:hover {
+            background: rgba(0, 0, 0, 0.8);
+            transform: scale(1.1);
+        }
+        
+        .nav-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+        
+        .nav-btn:disabled:hover {
+            transform: none;
+            background: rgba(0, 0, 0, 0.5);
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .spinner {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #1a73e8;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 0;
+            color: #5f6368;
+            display: none;
+        }
+        
+        .empty-state i {
+            font-size: 60px;
+            margin-bottom: 15px;
+            display: block;
+            color: #bdc3c7;
+        }
+        
+        .cache-status {
+            text-align: center;
+            font-size: 12px;
+            color: #5f6368;
+            margin-top: 10px;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #5f6368;
+            font-size: 14px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 10px;
+        }
+        
+        .key-hint {
+            display: flex;
+            justify-content: center;
+            margin-top: 15px;
+            gap: 15px;
+        }
+        
+        .key {
+            background: rgba(26, 115, 232, 0.1);
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            border: 1px solid rgba(26, 115, 232, 0.3);
+        }
+        
+        @media (max-width: 768px) {
+            .gallery {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .modal-nav {
+                padding: 0 10px;
+            }
+            
+            .nav-btn {
+                width: 40px;
+                height: 40px;
+                font-size: 18px;
+            }
+            
+            .modal-title {
+                font-size: 1rem;
+                max-width: 60%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>ZIP图片浏览器 - 优化版</h1>
+            <p class="subtitle">上传ZIP压缩包，浏览其中的图片内容。增强的缓存功能确保流畅浏览体验。</p>
+        </header>
+        
+        <div class="upload-container">
+            <div class="drop-area" id="dropArea">
+                <i>📁</i>
+                <p>拖放ZIP文件到此处</p>
+                <span>或</span>
+                <input type="file" id="fileInput" class="file-input" accept=".zip">
+                <label for="fileInput" class="browse-btn">选择ZIP文件</label>
+            </div>
+        </div>
+        
+        <div class="loading">
+            <div class="spinner"></div>
+            <p>正在处理ZIP文件，请稍候...</p>
+        </div>
+        
+        <div class="gallery-container" id="galleryContainer">
+            <div class="gallery-header">
+                <h2 class="gallery-title"><i>🖼️</i> 图片预览</h2>
+                <button class="back-btn" id="backBtn">返回上传</button>
+            </div>
+            
+            <div class="image-counter" id="imageCounter">共找到 <span id="imageCount">0</span> 张图片</div>
+            
+            <div class="gallery" id="gallery">
+                <!-- 图片将在这里动态生成 -->
+            </div>
+            
+            <div class="empty-state" id="emptyState">
+                <i>🖼️</i>
+                <p>此ZIP文件中未找到图片</p>
+            </div>
+            
+            <div class="cache-status" id="cacheStatus">
+                图片已缓存，可离线浏览
+            </div>
+        </div>
+        
+        <div class="modal" id="modal">
+            <div class="modal-header">
+                <div class="modal-title" id="modalTitle">图片名称.jpg</div>
+                <div class="modal-close" id="closeBtn">×</div>
+            </div>
+            
+            <div class="modal-content">
+                <div class="modal-image-container">
+                    <img id="modalImage" src="" alt="预览图">
+                    <div class="modal-loading" id="modalLoading"></div>
+                </div>
+            </div>
+            
+            <div class="modal-nav">
+                <button class="nav-btn" id="prevBtn">❮</button>
+                <button class="nav-btn" id="nextBtn">❯</button>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>© 2023 ZIP图片浏览器 | 使用JSZip库 | 增强缓存功能</p>
+        <div class="key-hint">
+            <div class="key">← 上一张</div>
+            <div class="key">→ 下一张</div>
+            <div class="key">ESC 关闭</div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const dropArea = document.getElementById('dropArea');
+            const fileInput = document.getElementById('fileInput');
+            const galleryContainer = document.getElementById('galleryContainer');
+            const gallery = document.getElementById('gallery');
+            const imageCounter = document.getElementById('imageCounter');
+            const imageCount = document.getElementById('imageCount');
+            const backBtn = document.getElementById('backBtn');
+            const modal = document.getElementById('modal');
+            const modalImage = document.getElementById('modalImage');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalLoading = document.getElementById('modalLoading');
+            const closeBtn = document.getElementById('closeBtn');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const loading = document.querySelector('.loading');
+            const emptyState = document.getElementById('emptyState');
+            const uploadContainer = document.querySelector('.upload-container');
+            const cacheStatus = document.getElementById('cacheStatus');
+            
+            let currentImages = [];
+            let currentIndex = 0;
+            let imageCache = {};
+            let preloadedIndexes = new Set();
+            
+            // 防止默认拖放行为
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            // 高亮拖放区域
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropArea.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, unhighlight, false);
+            });
+            
+            function highlight() {
+                dropArea.classList.add('dragover');
+            }
+            
+            function unhighlight() {
+                dropArea.classList.remove('dragover');
+            }
+            
+            // 处理拖放文件
+            dropArea.addEventListener('drop', handleDrop, false);
+            
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                
+                if (files.length) {
+                    handleFiles(files);
+                }
+            }
+            
+            // 处理文件输入
+            fileInput.addEventListener('change', function() {
+                handleFiles(this.files);
+            });
+            
+            // 返回按钮
+            backBtn.addEventListener('click', function() {
+                galleryContainer.style.display = 'none';
+                uploadContainer.style.display = 'block';
+                currentImages = [];
+                gallery.innerHTML = '';
+                imageCache = {};
+                preloadedIndexes.clear();
+            });
+            
+            // 关闭模态框
+            closeBtn.addEventListener('click', closeModal);
+            
+            // 上一张按钮
+            prevBtn.addEventListener('click', showPrevImage);
+            
+            // 下一张按钮
+            nextBtn.addEventListener('click', showNextImage);
+            
+            // 点击模态框背景关闭
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closeModal();
+                }
+            });
+            
+            // 键盘导航
+            document.addEventListener('keydown', function(e) {
+                if (modal.style.display === 'flex') {
+                    if (e.key === 'Escape') {
+                        closeModal();
+                    } else if (e.key === 'ArrowLeft') {
+                        showPrevImage();
+                    } else if (e.key === 'ArrowRight') {
+                        showNextImage();
+                    }
+                }
+            });
+            
+            // 显示上一张图片
+            function showPrevImage() {
+                if (currentImages.length === 0) return;
+                
+                currentIndex = (currentIndex - 1 + currentImages.length) % currentImages.length;
+                updateModalImage();
+                preloadAdjacentImages();
+            }
+            
+            // 显示下一张图片
+            function showNextImage() {
+                if (currentImages.length === 0) return;
+                
+                currentIndex = (currentIndex + 1) % currentImages.length;
+                updateModalImage();
+                preloadAdjacentImages();
+            }
+            
+            // 预加载相邻图片
+            function preloadAdjacentImages() {
+                // 预加载前一张图片
+                const prevIndex = (currentIndex - 1 + currentImages.length) % currentImages.length;
+                preloadImage(prevIndex);
+                
+                // 预加载后一张图片
+                const nextIndex = (currentIndex + 1) % currentImages.length;
+                preloadImage(nextIndex);
+            }
+            
+            // 预加载指定索引的图片
+            function preloadImage(index) {
+                if (preloadedIndexes.has(index) || !currentImages[index]) return;
+                
+                const img = new Image();
+                img.src = currentImages[index].url;
+                
+                img.onload = function() {
+                    preloadedIndexes.add(index);
+                    imageCache[index] = img;
+                };
+            }
+            
+            // 更新模态框中的图片
+            function updateModalImage() {
+                const image = currentImages[currentIndex];
+                
+                // 显示加载指示器
+                modalLoading.style.display = 'block';
+                modalImage.classList.add('loading');
+                
+                // 检查图片是否已缓存
+                if (imageCache[currentIndex]) {
+                    // 使用缓存的图片
+                    modalImage.src = imageCache[currentIndex].src;
+                    modalImage.alt = image.name;
+                    modalTitle.textContent = image.name;
+                    
+                    // 隐藏加载指示器
+                    modalLoading.style.display = 'none';
+                    modalImage.classList.remove('loading');
+                } else {
+                    // 显示加载指示器
+                    modalLoading.style.display = 'block';
+                    
+                    // 加载图片
+                    const img = new Image();
+                    img.onload = function() {
+                        modalImage.src = image.url;
+                        modalImage.alt = image.name;
+                        modalTitle.textContent = image.name;
+                        
+                        // 缓存图片
+                        imageCache[currentIndex] = img;
+                        preloadedIndexes.add(currentIndex);
+                        
+                        // 隐藏加载指示器
+                        modalLoading.style.display = 'none';
+                        modalImage.classList.remove('loading');
+                    };
+                    
+                    img.src = image.url;
+                }
+                
+                // 更新导航按钮状态
+                updateNavButtons();
+            }
+            
+            // 更新导航按钮状态
+            function updateNavButtons() {
+                // 在实际应用中，可以根据需要禁用/启用导航按钮
+                // 这里只是示例，可以根据需要添加逻辑
+            }
+            
+            // 关闭模态框
+            function closeModal() {
+                modal.style.display = 'none';
+            }
+            
+            // 处理上传的文件
+            function handleFiles(files) {
+                const file = files[0];
+                
+                if (!file) return;
+                
+                // 检查是否为ZIP文件
+                if (!file.type.includes('zip') && !file.name.endsWith('.zip')) {
+                    alert('请上传ZIP格式的压缩文件');
+                    return;
+                }
+                
+                loading.style.display = 'block';
+                uploadContainer.style.display = 'none';
+                cacheStatus.style.display = 'none';
+                
+                const zip = new JSZip();
+                
+                zip.loadAsync(file)
+                    .then(function(contents) {
+                        const imageFiles = [];
+                        
+                        // 遍历ZIP文件中的所有文件
+                        contents.forEach(function(relativePath, zipEntry) {
+                            if (!zipEntry.dir) {
+                                // 检查是否为图片文件
+                                const extension = relativePath.split('.').pop().toLowerCase();
+                                if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'].includes(extension)) {
+                                    imageFiles.push(zipEntry);
+                                }
+                            }
+                        });
+                        
+                        // 更新图片计数
+                        imageCount.textContent = imageFiles.length;
+                        
+                        if (imageFiles.length === 0) {
+                            emptyState.style.display = 'block';
+                            imageCounter.style.display = 'none';
+                            loading.style.display = 'none';
+                            galleryContainer.style.display = 'block';
+                            return;
+                        }
+                        
+                        emptyState.style.display = 'none';
+                        imageCounter.style.display = 'block';
+                        
+                        // 处理所有图片文件
+                        const promises = imageFiles.map(function(zipEntry) {
+                            return zipEntry.async('blob').then(function(blob) {
+                                return {
+                                    name: zipEntry.name,
+                                    url: URL.createObjectURL(blob)
+                                };
+                            });
+                        });
+                        
+                        return Promise.all(promises);
+                    })
+                    .then(function(images) {
+                        if (!images) return;
+                        
+                        currentImages = images;
+                        imageCache = {};
+                        preloadedIndexes.clear();
+                        
+                        // 清空画廊
+                        gallery.innerHTML = '';
+                        
+                        // 添加图片到画廊
+                        images.forEach(function(image, index) {
+                            const thumbnail = document.createElement('div');
+                            thumbnail.className = 'thumbnail';
+                            
+                            // 添加加载指示器
+                            const loadingSpinner = document.createElement('div');
+                            loadingSpinner.className = 'thumbnail-loading';
+                            thumbnail.appendChild(loadingSpinner);
+                            
+                            const img = document.createElement('img');
+                            img.src = image.url;
+                            img.alt = image.name;
+                            img.loading = 'lazy';
+                            
+                            // 图片加载完成后隐藏加载指示器
+                            img.onload = function() {
+                                loadingSpinner.style.display = 'none';
+                                // 缓存图片
+                                imageCache[index] = img;
+                                preloadedIndexes.add(index);
+                            };
+                            
+                            thumbnail.appendChild(img);
+                            
+                            thumbnail.addEventListener('click', function() {
+                                currentIndex = index;
+                                modalImage.src = '';
+                                updateModalImage();
+                                modal.style.display = 'flex';
+                                
+                                // 预加载相邻图片
+                                preloadAdjacentImages();
+                            });
+                            
+                            gallery.appendChild(thumbnail);
+                        });
+                        
+                        loading.style.display = 'none';
+                        galleryContainer.style.display = 'block';
+                        cacheStatus.style.display = 'block';
+                    })
+                    .catch(function(error) {
+                        console.error('处理ZIP文件时出错:', error);
+                        alert('处理ZIP文件时出错，请确保文件格式正确且未损坏');
+                        loading.style.display = 'none';
+                        uploadContainer.style.display = 'block';
+                    });
+            }
+        });
+    </script>
+</body>
+</html>

@@ -8,11 +8,11 @@
     <style>
         :root {
             --primary-color: #3498db;
-            --secondary-color: #2c3e50;
+            --secondary-color: #047ffa;
             --accent-color: #e74c3c;
             --light-color: #ecf0f1;
-            --dark-color: #34495e;
-            --text-color: #333;
+            --dark-color: #0aafa1;
+            --text-color: #000000;
             --text-light: #0e0e0e;
             --transition: all 0.3s ease;
             --gradient-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -41,12 +41,13 @@
         
         /* 导航栏样式 */
         header {
-            background-color: white;
+            background: rgba(255,255,255,0.05);
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             position: fixed;
             width: 100%;
             top: 0;
             z-index: 1000;
+            transition: none !important;
         }
         
         nav {
@@ -87,7 +88,6 @@
             padding: 150px 0 100px;
             text-align: center;
             background: url('images/hero1.png') center center/cover no-repeat;
-            /*background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);*/
         }
         
         .hero h1 {
@@ -103,6 +103,16 @@
             margin: 0 auto 30px;
         }
         
+        .hero .container {
+            background: rgba(255,255,255,0.25);
+            border-radius: 18px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            padding: 32px 0;
+            display: inline-block;
+        }
+
         .btn {
             display: inline-block;
             padding: 12px 30px;
@@ -112,6 +122,8 @@
             border-radius: 30px;
             font-weight: 500;
             transition: var(--transition);
+            cursor: pointer;
+            border: none;
         }
         
         .btn:hover {
@@ -123,7 +135,7 @@
         /* 关于我区域样式 */
         .about {
             padding: 100px 0;
-            background-color: white;
+            background: url('images/background1.png') center center/cover no-repeat;
         }
         
         .section-title {
@@ -158,6 +170,13 @@
         
         .about-text {
             flex: 1;
+            background: rgba(255,255,255,0.15);
+            border-radius: 18px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            padding: 32px;
+            margin-bottom: 20px;
         }
         
         .about-text h3 {
@@ -180,12 +199,12 @@
         /* 工具区域样式 */
         .tools-section {
             padding: 100px 0;
-            background: var(--gradient-bg);
+            background: url('images/background2.jpg') center center/cover no-repeat;
             color: #fff;
         }
         
         .tools-container {
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(255, 255, 255, 0.75);
             border-radius: 20px;
             box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
             overflow: hidden;
@@ -217,50 +236,68 @@
             line-height: 1.8;
         }
         
+        /* 选项卡样式 */
+        .tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 40px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .tab-btn {
+            padding: 15px 30px;
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #7f8c8d;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+        }
+        
+        .tab-btn::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 0;
+            height: 3px;
+            background-color: var(--primary-color);
+            transition: var(--transition);
+        }
+        
+        .tab-btn:hover {
+            color: var(--secondary-color);
+        }
+        
+        .tab-btn.active {
+            color: var(--primary-color);
+        }
+        
+        .tab-btn.active::after {
+            width: 100%;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
         .tools-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
             gap: 30px;
             margin-bottom: 40px;
-        }
-        
-        /* 新增：图片浏览器专用区域 */
-        .image-browsers-section {
-            margin: 60px 0 40px;
-            position: relative;
-        }
-        
-        .image-browsers-title {
-            text-align: center;
-            margin-bottom: 40px;
-            color: var(--secondary-color);
-            position: relative;
-        }
-        
-        .image-browsers-title h2 {
-            font-size: 2.2rem;
-            display: inline-block;
-            padding: 0 20px;
-            background-color: var(--card-bg);
-            position: relative;
-            z-index: 1;
-        }
-        
-        .image-browsers-title::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: linear-gradient(to right, transparent, var(--primary-color), transparent);
-            z-index: 0;
-        }
-        
-        .image-browsers-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 30px;
         }
         
         .tool-card {
@@ -355,13 +392,20 @@
         /* 联系区域样式 */
         .contact {
             padding: 100px 0;
-            background-color: white;
+            background: url('images/联系区域背景.png') center center/cover no-repeat;
         }
         
         .contact-content {
             text-align: center;
             max-width: 700px;
             margin: 0 auto;
+            background: rgba(255,255,255,0.25);
+            border-radius: 18px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            padding: 32px 0 24px 0;
+            position: relative;
         }
         
         .contact-content p {
@@ -394,6 +438,45 @@
             background-color: var(--primary-color);
             color: white;
             transform: translateY(-5px);
+        }
+        
+        /* 邮件弹窗样式 */
+        .email-btn-container {
+            position: relative;
+            display: inline-block;
+            margin: 15px 0;
+        }
+        
+        .email-popover {
+            display: none;
+            position: absolute;
+            top: calc(100% + 15px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: #fff;
+            color: #333;
+            padding: 20px 30px;
+            border-radius: 12px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.15);
+            font-size: 1.1rem;
+            z-index: 1000;
+            width: auto;
+            max-width: 90vw;
+            text-align: center;
+            animation: fadeIn 0.3s ease;
+            box-sizing: border-box;
+            word-wrap: break-word;
+        }
+        
+        .email-popover:after {
+            content: '';
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 8px;
+            border-style: solid;
+            border-color: transparent transparent #fff transparent;
         }
         
         /* 页脚样式 */
@@ -445,8 +528,7 @@
                 font-size: 1.1rem;
             }
             
-            .tools-grid,
-            .image-browsers-grid {
+            .tools-grid {
                 grid-template-columns: 1fr;
             }
             
@@ -463,14 +545,41 @@
                 font-size: 1.6rem;
             }
             
-            .image-browsers-title h2 {
-                font-size: 1.8rem;
+            .tabs {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .tab-btn {
+                width: 100%;
+                text-align: center;
+                margin-bottom: 10px;
+            }
+            
+            .email-popover {
+                max-width: 280px;
+                font-size: 1rem;
+                padding: 15px 20px;
             }
         }
     </style>
 </head>
 <body>
     <!-- 导航栏 -->
+    <header>
+        <div class="container">
+            <nav>
+                <div class="logo">哆啦七梦</div>
+                <ul class="nav-links">
+                    <li><a href="#home">首页</a></li>
+                    <li><a href="#about">关于我</a></li>
+                    <li><a href="#tools">我的工具</a></li>
+                    <li><a href="#contact">联系我</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
     <!-- 英雄区域 -->
     <section class="hero" id="home">
         <div class="container">
@@ -495,7 +604,7 @@
                 </div>
                 <div class="about-image">
                     <!-- 对应网页开发者的图片 -->
-                    <img src="images/1.png" alt="开发者画像">
+                    <img src="images/author.png" alt="开发者画像">
                 </div>
             </div>
         </div>
@@ -506,87 +615,95 @@
         <div class="container">
             <div class="tools-container">
                 <div class="tools-header">
-                    <h1><i class="fas fa-images"></i> 处理工具集</h1>
-                    <p class="tools-description">一套强大的在线图片处理工具，帮助您轻松完成图片重命名、文件夹结构可视化和高级图片编辑操作</p>
+                    <h1>
+                        <i class="fas fa-tools"></i>
+                        我的工具集
+                    </h1>
+                    <p class="tools-description">这里收集了我开发的各种实用工具，帮助您更高效地处理图片和管理文件</p>
                 </div>
 
-                <div class="tools-grid"><!--一个放卡片的区域-->
-                    <!-- 对应一个工具的卡片同时也是一个模版 -->
-                    <div class="tool-card">
-                        <div class="tool-icon">
-                            <i class="fas fa-tags"></i>
-                        </div>
-                        <div class="tool-content">
-                            <h3 class="tool-title">批量图片重命名工具</h3>
-                            <p class="tool-description">快速批量重命名多张图片，支持自定义前缀和起始序号，方便整理图片文件。</p>
-                            <ul class="tool-features">
-                                <li>拖放式上传多张图片</li>
-                                <li>自定义文件名前缀和序号</li>
-                                <li>实时预览重命名效果</li>
-                                <li>一键下载所有图片(ZIP格式)</li>
-                            </ul>
-                            <a href="批量图片重命名工具.html" class="tool-link">打开工具</a>
-                        </div>
-                    </div>
+                <!-- 选项卡导航 -->
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="processing-tools">处理工具集</button>
+                    <button class="tab-btn" data-tab="image-viewers">图片浏览器</button>
+                </div>
 
-                    <div class="tool-card">
-                        <div class="tool-icon">
-                            <i class="fas fa-folder-tree"></i>
+                <!-- 处理工具集选项卡内容 -->
+                <div id="processing-tools" class="tab-content active">
+                    <div class="tools-grid">
+                        <div class="tool-card">
+                            <div class="tool-icon">
+                                <i class="fas fa-tags"></i>
+                            </div>
+                            <div class="tool-content">
+                                <h3 class="tool-title">批量图片重命名工具</h3>
+                                <p class="tool-description">快速批量重命名多张图片，支持自定义前缀和起始序号，方便整理图片文件。</p>
+                                <ul class="tool-features">
+                                    <li>拖放式上传多张图片</li>
+                                    <li>自定义文件名前缀和序号</li>
+                                    <li>实时预览重命名效果</li>
+                                    <li>一键下载所有图片(ZIP格式)</li>
+                                </ul>
+                                <a href="批量图片重命名工具.html" class="tool-link">打开工具</a>
+                            </div>
                         </div>
-                        <div class="tool-content">
-                            <h3 class="tool-title">文件夹结构可视化工具</h3>
-                            <p class="tool-description">可视化浏览本地文件夹结构，支持图片和文本文件的预览，方便管理文件资源。</p>
-                            <ul class="tool-features">
-                                <li>选择文件夹并浏览其结构</li>
-                                <li>支持图片和文本文件预览</li>
-                                <li>显示文件和文件夹统计信息</li>
-                                <li>直观的树形结构展示</li>
-                            </ul>
-                            <a href="文件夹结构可视化工具.html" class="tool-link">打开工具</a>
-                        </div>
-                    </div>
-                    
-                    <div class="tool-card">
-                        <div class="tool-icon">
-                            <i class="fas fa-folder-tree"></i>
-                        </div>
-                        <div class="tool-content">
-                            <h3 class="tool-title">备忘录 - 带导入导出功能</h3>
-                            <p class="tool-description">一个简单的备忘录应用，支持导入导出备忘录，可以帮助您记录和整理知识。</p>
-                            <ul class="tool-features">
-                                <li>支持导入导出备忘录</li>
-                                <li>支持多种格式的导入导出</li>
-                                <li>支持多种主题和字体样式</li>
-                                <li>直观的树形结构展示</li>
-                            </ul>
-                            <a href="备忘录 - 带导入导出功能.html" class="tool-link">打开工具</a>
-                        </div>
-                    </div>
 
-                    <div class="tool-card">
-                        <div class="tool-icon">
-                            <i class="fas fa-crop-alt"></i>
+                        <div class="tool-card">
+                            <div class="tool-icon">
+                                <i class="fas fa-folder-tree"></i>
+                            </div>
+                            <div class="tool-content">
+                                <h3 class="tool-title">文件夹结构可视化工具</h3>
+                                <p class="tool-description">可视化浏览本地文件夹结构，支持图片和文本文件的预览，方便管理文件资源。</p>
+                                <ul class="tool-features">
+                                    <li>选择文件夹并浏览其结构</li>
+                                    <li>支持图片和文本文件预览</li>
+                                    <li>显示文件和文件夹统计信息</li>
+                                    <li>直观的树形结构展示</li>
+                                </ul>
+                                <a href="文件夹结构可视化工具.html" class="tool-link">打开工具</a>
+                            </div>
                         </div>
-                        <div class="tool-content">
-                            <h3 class="tool-title">蓝白风格图片处理工具</h3>
-                            <p class="tool-description">多功能图片处理工具，支持图片拼接、裁切、旋转和格式转换，满足各种编辑需求。</p>
-                            <ul class="tool-features">
-                                <li>水平和垂直图片拼接</li>
-                                <li>精确图片裁切功能</li>
-                                <li>旋转和翻转图片</li>
-                                <li>多种格式转换输出</li>
-                            </ul>
-                            <a href="蓝白风格图片处理工具合集.html" class="tool-link">打开工具</a>
+                        
+                        <div class="tool-card">
+                            <div class="tool-icon">
+                                <i class="fas fa-sticky-note"></i>
+                            </div>
+                            <div class="tool-content">
+                                <h3 class="tool-title">备忘录 - 带导入导出功能</h3>
+                                <p class="tool-description">一个简单的备忘录应用，支持导入导出备忘录，可以帮助您记录和整理知识。</p>
+                                <ul class="tool-features">
+                                    <li>支持导入导出备忘录</li>
+                                    <li>支持多种格式的导入导出</li>
+                                    <li>支持多种主题和字体样式</li>
+                                    <li>直观的树形结构展示</li>
+                                </ul>
+                                <a href="备忘录 - 带导入导出功能.html" class="tool-link">打开工具</a>
+                            </div>
+                        </div>
+
+                        <div class="tool-card">
+                            <div class="tool-icon">
+                                <i class="fas fa-crop-alt"></i>
+                            </div>
+                            <div class="tool-content">
+                                <h3 class="tool-title">透明风格图片处理工具</h3>
+                                <p class="tool-description">多功能图片处理工具，支持图片拼接、裁切、旋转和格式转换，满足各种编辑需求。</p>
+                                <ul class="tool-features">
+                                    <li>水平和垂直图片拼接</li>
+                                    <li>精确图片裁切功能</li>
+                                    <li>旋转和翻转图片</li>
+                                    <li>多种格式转换输出</li>
+                                </ul>
+                                <a href="透明风格图片处理工具合集.html" class="tool-link">打开工具</a>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- 新增：图片浏览器专用区域 -->
-                <div class="image-browsers-section">
-                    <div class="image-browsers-title">
-                        <h2><i class="fas fa-image"></i> 图片浏览器工具集</h2>
-                    </div>
-                    <div class="image-browsers-grid">
+                <!-- 图片浏览器选项卡内容 -->
+                <div id="image-viewers" class="tab-content">
+                    <div class="tools-grid">
                         <div class="tool-card">
                             <div class="tool-icon">
                                 <i class="fas fa-folder-open"></i>
@@ -601,6 +718,23 @@
                                     <li>返回主页和布局调整功能</li>
                                 </ul>
                                 <a href="image-viewer/蓝白风格图片浏览器.html" class="tool-link">打开工具</a>
+                            </div>
+                        </div>
+
+                        <div class="tool-card">
+                            <div class="tool-icon">
+                                <i class="fas fa-wand-magic-sparkles"></i>
+                            </div>
+                            <div class="tool-content">
+                                <h3 class="tool-title">蓝白图片浏览器 - 优化版</h3>
+                                <p class="tool-description">进一步优化的图片浏览器，支持懒加载和性能调整，提供更好的用户体验。</p>
+                                <ul class="tool-features">
+                                    <li>图片懒加载技术</li>
+                                    <li>性能优化调整</li>
+                                    <li>更好的用户体验</li>
+                                    <li>多种布局选项</li>
+                                </ul>
+                                <a href="image-viewer/蓝白图片浏览器 - 优化版.html" class="tool-link">打开工具</a>
                             </div>
                         </div>
 
@@ -626,22 +760,21 @@
                                 <i class="fas fa-tachometer-alt"></i>
                             </div>
                             <div class="tool-content">
-                                <h3 class="tool-title">蓝白图片浏览器 - 优化版</h3>
-                                <p class="tool-description">进一步优化的图片浏览器，支持懒加载和性能调整，提供更好的用户体验。</p>
+                                <h3 class="tool-title">ZIP图片浏览器 - 优化版</h3>
+                                <p class="tool-description">上传ZIP压缩包，浏览其中的图片内容。增强的缓存功能确保流畅浏览体验。</p>
                                 <ul class="tool-features">
-                                    <li>图片懒加载技术</li>
+                                    <li>图片缓存机制</li>
                                     <li>性能优化调整</li>
-                                    <li>更好的用户体验</li>
-                                    <li>多种布局选项</li>
+                                    <li>加载状态指示</li>
                                 </ul>
-                                <a href="image-viewer/蓝白图片浏览器 - 优化版.html" class="tool-link">打开工具</a>
+                                <a href="image-viewer/ZIP图片浏览器 - 优化版.html" class="tool-link">打开工具</a>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <div class="tools-footer">
-                    <p>部署在 Netlify | &copy; 2023 图片处理工具集</p>
+                    <p>部署在 Github Page | &copy; 2023 图片处理工具集</p>
                     <p>所有工具均在浏览器中运行，您的文件不会上传到服务器</p>
                 </div>
             </div>
@@ -656,10 +789,25 @@
             </div>
             <div class="contact-content">
                 <p>如果您对我的作品感兴趣，或者有任何问题、建议，欢迎通过以下方式与我联系。我期待与您交流！</p>
-                <a href="mailto:your.email@example.com" class="btn">发送邮件</a>
+                
+                <div class="email-btn-container">
+                    <a href="#" class="btn" id="showEmailBtn">发送邮件</a>
+                    <div class="email-popover" id="emailPopover">
+                        这是我的邮件地址：sevencrayon@qq.com
+                    </div>
+                </div>
+                
                 <div class="social-links">
-                    <a href="#"><i class="fab fa-github"></i></a>
-                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="https://github.com/Duola7M" target="_blank"><i class="fab fa-github"></i></a>
+                    <a href="https://space.bilibili.com/35126874" target="_blank">
+                        <!-- 使用B站SVG图标替换Twitter图标 -->
+                        <svg t="1758204316120" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="5384"
+                            width="25" height="25">
+                            <path
+                                d="M450.803484 456.506027l-120.670435 23.103715 10.333298 45.288107 119.454151-23.102578-9.117014-45.289244z m65.04448 120.060586c-29.483236 63.220622-55.926329 15.502222-55.926328 15.502223l-19.754098 12.768142s38.90176 53.192249 75.986489 12.764729c43.770311 40.42752 77.203911-13.068516 77.203911-13.068516l-17.934791-11.55072c0.001138-0.304924-31.305956 44.983182-59.575183-16.415858z m59.57632-74.773617L695.182222 524.895573l10.029511-45.288106-120.364373-23.103716-9.423076 45.289245z m237.784178-88.926436c-1.905778-84.362809-75.487004-100.540871-75.487004-100.540871s-57.408853-0.316302-131.944676-0.95232l54.237867-52.332089s8.562916-10.784996-6.026809-22.834062c-14.592-12.051342-15.543182-6.660551-20.615396-3.487289-4.441884 3.169849-69.462471 66.920676-80.878933 78.340551-29.494613 0-60.2624-0.319716-90.075591-0.319716h10.466418s-77.705671-76.754489-82.781298-80.241777c-5.075627-3.488427-5.709369-8.56064-20.616533 3.487289-14.589724 12.05248-6.026809 22.8352-6.026809 22.8352l55.504213 53.919288c-60.261262 0-112.280462 0.319716-136.383147 1.268623-78.025387 22.521173-71.99744 100.859449-71.99744 100.859449s0.950044 168.100978 0 253.103217c8.562916 85.00224 73.899804 98.636231 73.899805 98.636231s26.007324 0.63488 45.357511 0.63488c1.900089 5.391929 3.486151 32.034133 33.302756 32.034134 29.495751 0 33.30048-32.034133 33.30048-32.034134s217.263218-0.950044 235.340231-0.950044c0.953458 9.196658 5.394204 33.619058 35.207395 33.303893 29.494613-0.636018 31.714418-35.20512 31.714418-35.20512s10.151253-0.95232 40.280747 0c70.413653-13.005938 74.534684-95.468658 74.534684-95.468657s-1.265209-169.689316-0.312889-254.056676zM752.628622 681.8304c0"
+                                fill="#333333" p-id="5385"></path>
+                        </svg>
+                    </a>
                     <a href="#"><i class="fab fa-linkedin"></i></a>
                     <a href="#"><i class="fab fa-codepen"></i></a>
                 </div>
@@ -697,12 +845,64 @@
         window.addEventListener('scroll', function() {
             const header = document.querySelector('header');
             if (window.scrollY > 50) {
-                header.style.boxShadow = '0 5px 15px rgba(0, 0, 0, 0.1)';
-                header.style.background = 'rgba(255, 255, 255, 0.95)';
+                //header.style.boxShadow = '0 5px 15px rgba(0, 0, 0, 0.1)';
+                //header.style.background = 'rgba(255, 255, 255, 0.95)';
             } else {
-                header.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.1)';
-                header.style.background = 'white';
+                //header.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.1)';
+                //header.style.background = 'white';
             }
+        });
+
+        // 选项卡切换功能
+        document.addEventListener('DOMContentLoaded', function() {
+            const tabBtns = document.querySelectorAll('.tab-btn');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            tabBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    // 移除所有活动状态
+                    tabBtns.forEach(b => b.classList.remove('active'));
+                    tabContents.forEach(c => c.classList.remove('active'));
+                    
+                    // 添加当前活动状态
+                    btn.classList.add('active');
+                    const tabId = btn.getAttribute('data-tab');
+                    document.getElementById(tabId).classList.add('active');
+                });
+            });
+        });
+
+        // 邮件地址显示功能 - 改进版本
+        document.addEventListener('DOMContentLoaded', function() {
+            const btn = document.getElementById('showEmailBtn');
+            const popover = document.getElementById('emailPopover');
+            let isPopoverVisible = false;
+
+            // 点击按钮切换弹窗显示/隐藏
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                if (isPopoverVisible) {
+                    popover.style.display = 'none';
+                } else {
+                    popover.style.display = 'block';
+                }
+                isPopoverVisible = !isPopoverVisible;
+            });
+
+            // 点击页面其他区域隐藏弹窗
+            document.addEventListener('click', function (e) {
+                if (isPopoverVisible && !popover.contains(e.target) && e.target !== btn) {
+                    popover.style.display = 'none';
+                    isPopoverVisible = false;
+                }
+            });
+
+            // 弹窗内点击阻止冒泡
+            popover.addEventListener('click', function (e) {
+                e.stopPropagation();
+            });
         });
     </script>
 </body>
