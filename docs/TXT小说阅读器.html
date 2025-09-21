@@ -14,7 +14,7 @@
         }
         
         body {
-            background: url(images/TXTbackground.png) no-repeat center center fixed;
+            background: none;
             background-size: cover;
             color: #333;
             line-height: 1.6;
@@ -48,7 +48,7 @@
             overflow: hidden;
             display: flex;
             height: 90vh;
-            transition: background-color 0.3s ease, transform 0.3s ease;
+            /* 移除过渡效果以避免窗口抖动 */
             opacity: 0;
             transform: scale(0.8) translateY(20px);
             pointer-events: none;
@@ -58,6 +58,8 @@
             opacity: 1;
             transform: scale(1) translateY(0);
             pointer-events: auto;
+            /* 仅为初始显示添加过渡效果，不影响后续交互 */
+            transition: opacity 0.6s ease, transform 0.6s ease;
         }
         
         /* 初始页面的球 */
@@ -91,6 +93,7 @@
         .initial-ball.popped {
             transform: scale(30);
             opacity: 0;
+            pointer-events: none;
         }
         
         /* 初始页面文字说明 */
@@ -147,10 +150,11 @@
             pointer-events: none;
         }
         
-        .container:hover {
+        /* 移除容器悬停弹动效果 */
+        /*.container:hover {
             transform: translateY(-3px);
             box-shadow: 0 20px 45px rgba(0, 0, 0, 0.3);
-        }
+        }*/
         
         /* 目录面板样式 */
         .sidebar {
@@ -655,13 +659,37 @@
             text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.1);
         }
         
-        /* 导航按钮间距调整 */
-        .chapter-nav-btn {
-            margin: 0 10px 0 0;
+        /* 统一所有导航按钮的样式和间距 */
+        .chapter-nav-btn,
+        .page-nav-btn {
+            /* 统一的边距设置 */
+            margin: 0 5px;
+            /* 统一的位置和层级设置 */
+            position: relative;
+            z-index: 10;
+            /* 统一的内边距设置 */
+            padding: 12px 24px;
         }
         
-        .page-nav-btn {
-            margin: 0 0 0 10px;
+        /* 仅保留必要的间距调整 */
+        .chapter-nav-btn:first-child {
+            margin-left: 0;
+        }
+        
+        .page-nav-btn:last-child {
+            margin-right: 0;
+        }
+        
+        /* 修复上一页按钮从上方向无法点击的问题 */
+        /* 统一所有导航按钮的样式 */
+        .nav-btn {
+            /* 确保所有按钮都有一致的视觉反馈和点击区域 */
+            border: 2px solid transparent;
+        }
+        
+        /* 移除上一页按钮的特定样式，使用统一的.nav-btn样式 */
+        #prev-page {
+            /* 继承.nav-btn和.page-nav-btn的所有样式 */
         }
         
         @media (max-width: 900px) {
@@ -700,7 +728,7 @@
         
         .toast {
             position: fixed;
-            bottom: 25px;
+            bottom: 100px;
             left: 50%;
             transform: translateX(-50%);
             background: rgba(0, 0, 0, 0.85);
@@ -757,7 +785,7 @@
             cursor: pointer;
             font-size: 20px;
             position: absolute;
-            left: 15px;
+            right: 15px;
             top: 15px;
             z-index: 10;
             background: rgba(0, 0, 0, 0.5);
@@ -974,6 +1002,112 @@
             opacity: 1;
         }
         
+        /* 预设背景样式 */
+        .preset-backgrounds {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+            height: 170px;
+            position: relative;
+            margin-left: auto;
+            margin-right: auto;
+            max-width: 320px;
+        }
+        
+        /* 背景设置面板元素居中 */
+        #background-tab {
+            text-align: center;
+        }
+        
+        #background-tab .setting-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        #background-tab .background-upload {
+            align-items: center;
+            max-width: 250px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        #background-tab .slider-container {
+            width: 100%;
+            max-width: 300px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        #background-tab .text-color-selector {
+            justify-content: center;
+            margin-left: auto;
+            margin-right: auto;
+            max-width: 300px;
+        }
+        
+        .preset-bg-image {
+            width: 100%;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* 分页控制样式 */
+        .bg-pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 15px;
+            gap: 15px;
+        }
+        
+        .pagination-btn {
+            padding: 8px 16px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+            min-width: 70px;
+            text-align: center;
+        }
+        
+        .pagination-btn:hover:not(:disabled) {
+            background-color: #2980b9;
+        }
+        
+        .pagination-btn:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+        
+        .page-info {
+            font-size: 14px;
+            color: #7f8c8d;
+            min-width: 80px;
+            text-align: center;
+        }
+        
+        .preset-bg-image:hover {
+            border-color: #3498db;
+            transform: scale(1.03);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .preset-bg-image.active {
+            border-color: #2ecc71;
+            box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.3);
+        }
+        
         .background-panel.show {
             display: block;
             transform: translateY(0);
@@ -1014,6 +1148,20 @@
                 left: 5%;
                 bottom: 80px;
             }
+        }
+        #reading-tab {
+            text-align: center;
+        }
+        
+        #reading-tab .setting-group {
+            margin-bottom: 25px;
+        }
+        
+        #reading-tab .font-size-selector,
+        #reading-tab .theme-selector,
+        #reading-tab .text-color-selector {
+            justify-content: center;
+            margin: 0 auto;
         }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -1164,24 +1312,6 @@
         <!-- 背景设置选项卡 -->
         <div class="tab-content" id="background-tab">
             <div class="setting-group">
-                <label class="setting-label">预设背景</label>
-                <div class="background-selector">
-                    <div class="background-btn active" data-bg="https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80">
-                        <img src="https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?ixlib=rb-1.2.1&auto=format&fit=crop&w=200&q=80" alt="背景1">
-                    </div>
-                    <div class="background-btn" data-bg="https://images.unsplash.com/photo-1459369510627-9efbee1e6051?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80">
-                        <img src="https://images.unsplash.com/photo-1459369510627-9efbee1e6051?ixlib=rb-1.2.1&auto=format&fit=crop&w=200&q=80" alt="背景2">
-                    </div>
-                    <div class="background-btn" data-bg="https://images.unsplash.com/photo-1518837695005-2083093ee35b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80">
-                        <img src="https://images.unsplash.com/photo-1518837695005-2083093ee35b?ixlib=rb-1.2.1&auto=format&fit=crop&w=200&q=80" alt="背景3">
-                    </div>
-                    <div class="background-btn" data-bg="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80">
-                        <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-1.2.1&auto=format&fit=crop&w=200&q=80" alt="背景5">
-                    </div>
-                </div>
-            </div>
-            
-            <div class="setting-group">
                 <label class="setting-label">自定义背景</label>
                 <div class="background-upload">
                     <input type="file" id="background-upload-input" class="background-upload-input" accept="image/*">
@@ -1222,6 +1352,33 @@
                     <button class="text-color-btn" data-color="#2c3e50" style="background-color: #2c3e50;"></button>
                     <button class="text-color-btn" data-color="#8e44ad" style="background-color: #8e44ad;"></button>
                     <button class="text-color-btn" data-color="#c0392b" style="background-color: #c0392b;"></button>
+                </div>
+            </div>
+            
+            <div class="setting-group">
+                <label class="setting-label">预设背景</label>
+                <div class="preset-backgrounds">
+                    <img src="images/background/bg (1).jpg" class="preset-bg-image" data-bg="images/background/bg (1).jpg" alt="预设背景1">
+                    <img src="images/background/bg (1).png" class="preset-bg-image" data-bg="images/background/bg (1).png" alt="预设背景2">
+                    <img src="images/background/bg (11).png" class="preset-bg-image" data-bg="images/background/bg (11).png" alt="预设背景3">
+                    <img src="images/background/bg (13).png" class="preset-bg-image" data-bg="images/background/bg (13).png" alt="预设背景4">
+                    <img src="images/background/bg (14).png" class="preset-bg-image" data-bg="images/background/bg (14).png" alt="预设背景5">
+                    <img src="images/background/bg (15).png" class="preset-bg-image" data-bg="images/background/bg (15).png" alt="预设背景6">
+                    <img src="images/background/bg (2).jpg" class="preset-bg-image" data-bg="images/background/bg (2).jpg" alt="预设背景7">
+                    <img src="images/background/bg (2).png" class="preset-bg-image" data-bg="images/background/bg (2).png" alt="预设背景8">
+                    <img src="images/background/bg (3).jpg" class="preset-bg-image" data-bg="images/background/bg (3).jpg" alt="预设背景9">
+                    <img src="images/background/bg (3).png" class="preset-bg-image" data-bg="images/background/bg (3).png" alt="预设背景10">
+                    <img src="images/background/bg (4).jpg" class="preset-bg-image" data-bg="images/background/bg (4).jpg" alt="预设背景11">
+                    <img src="images/background/bg (4).png" class="preset-bg-image" data-bg="images/background/bg (4).png" alt="预设背景12">
+                    <img src="images/background/bg (6).png" class="preset-bg-image" data-bg="images/background/bg (6).png" alt="预设背景13">
+                    <img src="images/background/bg (7).png" class="preset-bg-image" data-bg="images/background/bg (7).png" alt="预设背景14">
+                    <img src="images/background/bg (8).png" class="preset-bg-image" data-bg="images/background/bg (8).png" alt="预设背景15">
+                </div>
+                <!-- 分页控制按钮 -->
+                <div class="bg-pagination">
+                    <button id="prev-bg-page" class="pagination-btn" disabled>上一页</button>
+                    <span id="bg-page-info" class="page-info">第1页/共3页</span>
+                    <button id="next-bg-page" class="pagination-btn">下一页</button>
                 </div>
             </div>
         </div>
@@ -1288,7 +1445,7 @@
                 encoding: 'auto',
                 fileData: null,
                 background: {
-                    image: 'https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80',
+                    image: '',
                     opacity: 70,
                     windowOpacity: 92
                 }
@@ -1400,6 +1557,114 @@
             });
             
             // 格式化文件大小
+
+            // 预设背景分页功能
+            // 直接执行而不是等待DOMContentLoaded，因为脚本已在body末尾
+            (function() {
+                const presetBgImages = document.querySelectorAll('.preset-bg-image');
+                const prevBtn = document.getElementById('prev-bg-page');
+                const nextBtn = document.getElementById('next-bg-page');
+                const pageInfo = document.getElementById('bg-page-info');
+                const presetContainer = document.querySelector('.preset-backgrounds');
+                
+                console.log('预设背景分页功能初始化');
+                console.log('找到的背景图片数量:', presetBgImages.length);
+                console.log('上一页按钮:', prevBtn);
+                console.log('下一页按钮:', nextBtn);
+                
+                // 每页显示的图片数量：2行3列 = 6个
+                const imagesPerPage = 6;
+                let currentPage = 1;
+                const totalPages = Math.ceil(presetBgImages.length / imagesPerPage);
+                
+                console.log('总页数:', totalPages);
+                
+                // 更新分页信息
+                function updatePageInfo() {
+                    pageInfo.textContent = `第${currentPage}页/共${totalPages}页`;
+                    prevBtn.disabled = currentPage === 1;
+                    nextBtn.disabled = currentPage === totalPages;
+                }
+                
+                // 显示当前页的图片
+                function showCurrentPage() {
+                    const startIndex = (currentPage - 1) * imagesPerPage;
+                    const endIndex = startIndex + imagesPerPage;
+                    
+                    // 先隐藏所有图片
+                    presetBgImages.forEach(img => {
+                        img.style.display = 'none';
+                        // 重置所有图片的位置
+                        img.style.position = 'relative';
+                        img.style.left = '0';
+                        img.style.top = '0';
+                    });
+                    
+                    // 然后显示当前页的图片
+                    for (let i = 0; i < presetBgImages.length; i++) {
+                        if (i >= startIndex && i < endIndex) {
+                            presetBgImages[i].style.display = 'block';
+                        }
+                    }
+                    
+                    // 更新分页信息
+                    updatePageInfo();
+                }
+                
+                // 初始化显示第一页
+                showCurrentPage();
+                
+                // 上一页按钮点击事件
+                prevBtn.addEventListener('click', function() {
+                    if (currentPage > 1) {
+                        currentPage--;
+                        showCurrentPage();
+                    }
+                });
+                
+                // 下一页按钮点击事件
+                nextBtn.addEventListener('click', function() {
+                    // 添加视觉反馈
+                    this.style.backgroundColor = '#2980b9';
+                    setTimeout(() => {
+                        this.style.backgroundColor = '';
+                    }, 300);
+                    
+                    console.log('下一页按钮被点击');
+                    console.log('当前页码:', currentPage);
+                    console.log('总页数:', totalPages);
+                    
+                    if (currentPage < totalPages) {
+                        console.log('切换到下一页');
+                        currentPage++;
+                        showCurrentPage();
+                        showToast('已切换到第' + currentPage + '页');
+                    } else {
+                        console.log('已经是最后一页');
+                        showToast('已经是最后一页了');
+                    }
+                });
+                
+                // 预设背景点击事件处理
+                presetBgImages.forEach(img => {
+                    img.addEventListener('click', function() {
+                        // 获取选中的背景图片路径
+                        const selectedBg = this.getAttribute('data-bg');
+                        
+                        // 设置背景图片
+                        book.background.image = selectedBg;
+                        applyBackground();
+                        saveToLocalStorage();
+                        
+                        // 更新选中状态
+                        presetBgImages.forEach(img => img.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        // 显示提示信息
+                        showToast('背景图片已更新');
+                    });
+                });
+            })();
             function formatFileSize(bytes) {
                 if (bytes < 1024) return bytes + ' bytes';
                 else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
@@ -1468,17 +1733,7 @@
                 saveToLocalStorage();
             });
             
-            // 预设背景按钮事件
-            backgroundBtns.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    backgroundBtns.forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    
-                    book.background.image = btn.dataset.bg;
-                    applyBackground();
-                    saveToLocalStorage();
-                });
-            });
+
             
             // 文字颜色选择按钮事件
             textColorBtns.forEach(btn => {
@@ -1513,15 +1768,36 @@
                 if (book.background && book.background.opacity !== undefined) {
                     document.body.style.setProperty('--bg-opacity', book.background.opacity / 100);
                     // 修复无法访问伪元素的错误
-                    document.body.style.backgroundColor = `rgba(0, 0, 0, ${1 - book.background.opacity / 100})`;
+                    // 重要改进：当没有背景图片时，不设置黑色背景，避免出现灰色背景
+                    if (book.background.image) {
+                        document.body.style.backgroundColor = `rgba(0, 0, 0, ${1 - book.background.opacity / 100})`;
+                    } else {
+                        // 当没有背景图片时，使用白色背景
+                        document.body.style.backgroundColor = 'rgba(255, 255, 255, 1)';
+                    }
                 }
             }
             
-            // 应用窗口透明度 - 添加空值检查和元素存在性检查
+            // 应用窗口透明度 - 优化性能和避免弹动效果
             function applyWindowOpacity() {
                 if (!book.background || book.background.windowOpacity === undefined) return;
                 const opacity = book.background.windowOpacity / 100;
                 
+                // 缓存查询结果，避免重复DOM查询
+                const elementsCache = {
+                    '.container': document.querySelector('.container'),
+                    '.upload-section': document.querySelector('.upload-section'),
+                    '.encoding-section': document.querySelector('.encoding-section'),
+                    '.reader-header': document.querySelector('.reader-header'),
+                    '.reader-content': document.querySelector('.reader-content'),
+                    '.chapter-nav': document.querySelector('.chapter-nav'),
+                    '.reader-footer': document.querySelector('.reader-footer'),
+                    '.settings-panel': document.querySelector('.settings-panel'),
+                    '.sidebar': document.querySelector('.sidebar'),
+                    '.sidebar-header': document.querySelector('.sidebar-header')
+                };
+                
+                // 避免不必要的透明度设置，只有当透明度有变化时才更新
                 const elementsToUpdate = [
                     { selector: '.container', property: 'backgroundColor', value: `rgba(255, 255, 255, ${opacity})` },
                     { selector: '.upload-section', property: 'backgroundColor', value: `rgba(248, 249, 250, ${opacity})` },
@@ -1534,13 +1810,49 @@
                     { selector: '.sidebar', property: 'backgroundColor', value: `rgba(44, 62, 80, ${opacity})` }
                 ];
                 
+                // 临时禁用过渡效果以避免弹动
+                const tempDisableTransitions = () => {
+                    elementsToUpdate.forEach(item => {
+                        const element = elementsCache[item.selector];
+                        if (element) {
+                            element.style.transition = 'none';
+                        }
+                    });
+                    if (elementsCache['.sidebar-header']) {
+                        elementsCache['.sidebar-header'].style.transition = 'none';
+                    }
+                };
+                
+                // 恢复过渡效果
+                const restoreTransitions = () => {
+                    setTimeout(() => {
+                        elementsToUpdate.forEach(item => {
+                            const element = elementsCache[item.selector];
+                            if (element) {
+                                element.style.transition = '';
+                            }
+                        });
+                        if (elementsCache['.sidebar-header']) {
+                            elementsCache['.sidebar-header'].style.transition = '';
+                        }
+                    }, 0);
+                };
+                
+                // 优化性能：先禁用过渡，更新样式，然后恢复过渡
+                tempDisableTransitions();
+                
                 elementsToUpdate.forEach(item => {
-                    const element = document.querySelector(item.selector);
+                    const element = elementsCache[item.selector];
                     if (element) {
                         element.style[item.property] = item.value;
                     }
                 });
-                document.querySelector('.sidebar-header').style.background = `rgba(44, 62, 80, ${opacity})`;
+                
+                if (elementsCache['.sidebar-header']) {
+                    elementsCache['.sidebar-header'].style.background = `rgba(44, 62, 80, ${opacity})`;
+                }
+                
+                restoreTransitions();
             }
             
             // 使用指定编码处理文件
@@ -1859,13 +2171,19 @@
                     
                     const chapterContent = book.content.substring(chapterStart, chapterEnd);
                     startPos = (book.currentPage - 1) * book.pageSize;
-                    const endPos = Math.min(startPos + book.pageSize, chapterContent.length);
+                    
+                    // 智能断句，优先在句子结束处断开
+                    let endPos = findOptimalPageEnd(chapterContent, startPos, book.pageSize);
+                    endPos = Math.min(endPos, chapterContent.length);
                     contentToShow = chapterContent.substring(startPos, endPos);
                     
                     chapterInfo.textContent = book.chapters[book.currentChapter].title;
                 } else {
                     startPos = (book.currentPage - 1) * book.pageSize;
-                    const endPos = Math.min(startPos + book.pageSize, book.content.length);
+                    
+                    // 智能断句，优先在句子结束处断开
+                    let endPos = findOptimalPageEnd(book.content, startPos, book.pageSize);
+                    endPos = Math.min(endPos, book.content.length);
                     contentToShow = book.content.substring(startPos, endPos);
                 }
                 
@@ -1910,8 +2228,11 @@
                 nextChapterBtn.disabled = book.currentChapter >= book.chapters.length - 1;
                 
                 // 保存进度
-                saveToLocalStorage();
-            }
+            saveToLocalStorage();
+            
+            // 切换页面后自动滚动到顶部
+            readerContent.scrollTop = 0;
+        }
             
             // 翻页事件
             prevPageBtn.addEventListener('click', () => {
@@ -1988,6 +2309,44 @@
                 // 重置文件输入框，以便再次选择同一文件
                 fileInput.value = '';
             });
+            
+            // 智能寻找最佳分页位置
+            function findOptimalPageEnd(content, startPos, idealLength) {
+                // 目标位置
+                const targetPos = startPos + idealLength;
+                
+                // 如果内容长度不足，直接返回末尾
+                if (targetPos >= content.length) {
+                    return content.length;
+                }
+                
+                // 中文断句标点符号
+                const sentenceEndings = /[。！？；.!?;]/;
+                
+                // 在目标位置附近寻找最佳断句点
+                // 向前查找100个字符范围内的最后一个句子结束符
+                const lookBackRange = Math.min(100, idealLength / 2);
+                const startLookBack = Math.max(startPos, targetPos - lookBackRange);
+                
+                for (let i = targetPos; i >= startLookBack; i--) {
+                    if (sentenceEndings.test(content[i])) {
+                        // 如果找到了句子结束符，在结束符后断开
+                        return i + 1;
+                    }
+                }
+                
+                // 如果没有找到句子结束符，寻找空格或换行符
+                const whitespace = /[\s\n]/;
+                for (let i = targetPos; i >= startLookBack; i--) {
+                    if (whitespace.test(content[i])) {
+                        // 在空格或换行符后断开
+                        return i + 1;
+                    }
+                }
+                
+                // 如果以上都没有找到，就使用原始的分页位置
+                return targetPos;
+            }
             
             // 清除缓存按钮事件
             document.getElementById('clear-cache-btn').addEventListener('click', () => {
@@ -2149,10 +2508,11 @@
                         book.textColor = bookData.textColor || '#333'; // 加载字体颜色，默认黑色
                         book.encoding = bookData.encoding || 'utf-8';
                         book.chapters = bookData.chapters || [];
-                        book.background = bookData.background || { 
-                            opacity: 100, 
-                            windowOpacity: 100, 
-                            imageUrl: '' 
+                        // 使用默认的background设置，但不加载之前的背景图片
+                        book.background = { 
+                            image: '', // 不使用保存的背景图片
+                            opacity: bookData.background ? bookData.background.opacity : 100, 
+                            windowOpacity: bookData.background ? bookData.background.windowOpacity : 100 
                         };
                         
                         // 不加载完整内容，需要用户重新上传文件
@@ -2217,6 +2577,61 @@
             loadFromLocalStorage();
         });
         
+        // 随机背景图片功能
+            document.addEventListener('DOMContentLoaded', function() {
+                // 背景图片数组 - docs/images/background文件夹中实际存在的图片
+                const backgroundImages = [
+                    'images/background/bg (1).jpg',
+                    'images/background/bg (1).png',
+                    'images/background/bg (2).jpg',
+                    'images/background/bg (2).png',
+                    'images/background/bg (3).jpg',
+                    'images/background/bg (3).png',
+                    'images/background/bg (4).jpg',
+                    'images/background/bg (4).png',
+                    'images/background/bg (6).png',
+                    'images/background/bg (7).png',
+                    'images/background/bg (8).png',
+                    'images/background/bg (11).png',
+                    'images/background/bg (13).png',
+                    'images/background/bg (14).png',
+                    'images/background/bg (15).png'
+                ];
+                
+                // 随机选择背景图片
+                function setRandomBackground() {
+                    // 确保随机背景必定在随机背景的组里面产生
+                    // 从数组中随机选择一张图片
+                    const randomIndex = Math.floor(Math.random() * backgroundImages.length);
+                    const randomBackground = backgroundImages[randomIndex];
+                    
+                    // 设置背景图片（使用!important确保覆盖CSS中的默认设置）
+                    document.body.style.setProperty('background-image', `url('${randomBackground}')`, 'important');
+                    document.body.style.setProperty('background-repeat', 'no-repeat', 'important');
+                    document.body.style.setProperty('background-position', 'center center', 'important');
+                    document.body.style.setProperty('background-attachment', 'fixed', 'important');
+                    document.body.style.setProperty('background-size', 'cover', 'important');
+                    
+                    // 确保book对象和background属性存在
+                    if (typeof book === 'undefined') {
+                        window.book = { background: {} };
+                    } else if (!book.background) {
+                        book.background = {};
+                    }
+                    
+                    // 更新背景图片信息
+                    book.background.image = randomBackground;
+                    
+                    // 确保设置背景图片后立即更新背景透明度
+                    if (typeof applyBackgroundOpacity === 'function') {
+                        applyBackgroundOpacity();
+                    }
+                }
+                
+                // 页面加载时设置随机背景，使用setTimeout确保在CSS加载完成后执行
+                setTimeout(setRandomBackground, 100);
+            });
+
         // 初始页面的球点击功能
         document.addEventListener('DOMContentLoaded', function() {
             const initialBall = document.createElement('div');
