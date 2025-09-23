@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>基础模态框过渡</title>
+  <style>
+    /* 基础样式重置 */
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+    body { padding: 50px; background: #f5f5f5; }
+
+    /* 触发按钮 */
+    .open-btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 6px;
+      background: #2c3e50;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .open-btn:hover { background: #34495e; }
+
+    /* 遮罩层：默认隐藏 */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.8);
+      opacity: 0;
+      visibility: hidden; /* 隐藏时无法点击 */
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+      z-index: 10;
+    }
+
+    /* 弹窗容器：默认隐藏 */
+    .modal {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.9); /* 初始偏移+缩小 */
+      width: 90%;
+      max-width: 500px;
+      background: white;
+      border-radius: 8px;
+      padding: 30px;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease;
+      z-index: 20;
+    }
+
+    /* 标题与关闭按钮 */
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+    }
+    .modal-title { font-size: 20px; color: #2c3e50; }
+    .close-btn {
+      border: none;
+      background: transparent;
+      font-size: 24px;
+      color: #999;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    .close-btn:hover { color: #333; }
+
+    /* 激活状态：显示遮罩和弹窗 */
+    .modal-overlay.active { opacity: 1; visibility: visible; }
+    .modal.active {
+      opacity: 1;
+      visibility: visible;
+      transform: translate(-50%, -50%) scale(1); /* 恢复居中+原尺寸 */
+    }
+  </style>
+</head>
+<body>
+  <button class="open-btn">打开弹窗</button>
+
+  <!-- 遮罩层 -->
+  <div class="modal-overlay"></div>
+
+  <!-- 弹窗 -->
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title">基础过渡弹窗</h2>
+      <button class="close-btn">&times;</button>
+    </div>
+    <div class="modal-content">
+      <p>这是一个使用 CSS 过渡实现的淡入淡出+缩放动画，点击关闭按钮或遮罩层可关闭。</p>
+    </div>
+  </div>
+
+  <script>
+    // 获取元素
+    const openBtn = document.querySelector('.open-btn');
+    const closeBtn = document.querySelector('.close-btn');
+    const modal = document.querySelector('.modal');
+    const overlay = document.querySelector('.modal-overlay');
+
+    // 打开弹窗
+    function openModal() {
+      modal.classList.add('active');
+      overlay.classList.add('active');
+      document.body.style.overflow = 'hidden'; // 禁止背景滚动
+    }
+
+    // 关闭弹窗
+    function closeModal() {
+      modal.classList.remove('active');
+      overlay.classList.remove('active');
+      document.body.style.overflow = ''; // 恢复背景滚动
+    }
+
+    // 绑定事件
+    openBtn.addEventListener('click', openModal);
+    closeBtn.addEventListener('click', closeModal);
+    overlay.addEventListener('click', closeModal); // 点击遮罩关闭
+  </script>
+</body>
+</html>

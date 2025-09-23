@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>侧边滑入抽屉</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #f0f2f5; min-height: 100vh; }
+
+    /* 菜单按钮（固定在左上角） */
+    .menu-btn {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      width: 40px;
+      height: 40px;
+      border: none;
+      border-radius: 8px;
+      background: white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      cursor: pointer;
+      z-index: 10;
+    }
+    .menu-btn::before {
+      content: '☰';
+      font-size: 20px;
+      color: #333;
+    }
+
+    /* 遮罩层：带背景模糊 */
+    .drawer-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(2px); /* 背景模糊，增强层次感 */
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s, visibility 0.3s;
+      z-index: 20;
+    }
+
+    /* 抽屉容器：默认在左侧隐藏 */
+    .drawer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 80%;
+      max-width: 350px;
+      height: 100vh;
+      background: white;
+      box-shadow: 2px 0 10px rgba(0,0,0,0.15);
+      transform: translateX(-100%); /* 左侧隐藏 */
+      transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1); /* 缓动曲线更流畅 */
+      z-index: 30;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    /* 抽屉标题 */
+    .drawer-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin: 20px 0 30px;
+      color: #2d3748;
+    }
+
+    /* 抽屉菜单列表 */
+    .drawer-menu {
+      list-style: none;
+    }
+    .drawer-menu li {
+      margin-bottom: 15px;
+    }
+    .drawer-menu a {
+      display: block;
+      padding: 12px 16px;
+      border-radius: 8px;
+      color: #4a5568;
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+    .drawer-menu a:hover {
+      background: #edf2f7;
+      color: #2b6cb0;
+    }
+
+    /* 激活状态：显示遮罩和抽屉 */
+    .drawer-overlay.active { opacity: 1; visibility: visible; }
+    .drawer.active { transform: translateX(0); }
+
+    /* 关闭按钮 */
+    .close-drawer {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      border: none;
+      background: transparent;
+      font-size: 22px;
+      color: #999;
+      cursor: pointer;
+    }
+    .close-drawer:hover { color: #333; }
+  </style>
+</head>
+<body>
+  <button class="menu-btn"></button>
+
+  <!-- 遮罩层 -->
+  <div class="drawer-overlay"></div>
+
+  <!-- 抽屉 -->
+  <div class="drawer">
+    <button class="close-drawer">&times;</button>
+    <h3 class="drawer-title">侧边菜单</h3>
+    <ul class="drawer-menu">
+      <li><a href="#">首页</a></li>
+      <li><a href="#">我的收藏</a></li>
+      <li><a href="#">设置</a></li>
+      <li><a href="#">帮助中心</a></li>
+      <li><a href="#">关于我们</a></li>
+    </ul>
+  </div>
+
+  <script>
+    const menuBtn = document.querySelector('.menu-btn');
+    const closeBtn = document.querySelector('.close-drawer');
+    const drawer = document.querySelector('.drawer');
+    const overlay = document.querySelector('.drawer-overlay');
+
+    // 打开抽屉
+    function openDrawer() {
+      drawer.classList.add('active');
+      overlay.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    // 关闭抽屉
+    function closeDrawer() {
+      drawer.classList.remove('active');
+      overlay.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    // 绑定事件
+    menuBtn.addEventListener('click', openDrawer);
+    closeBtn.addEventListener('click', closeDrawer);
+    overlay.addEventListener('click', closeDrawer);
+  </script>
+</body>
+</html>

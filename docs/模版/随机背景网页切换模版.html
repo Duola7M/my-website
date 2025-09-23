@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>背景与窗口设置</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* 全局样式重置 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        /* 背景容器样式 */
+        body {
+            height: 100vh;
+            width: 100vw;
+            overflow-x: hidden;
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+        }
+        
+        /* 淡入动画 */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* 呼吸动画 */
+        @keyframes breathe {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+        
+        /* 脉冲动画 */
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(26, 115, 232, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(26, 115, 232, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(26, 115, 232, 0);
+            }
+        }
+        
+        /* 背景图片样式 */
+        #background-image {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            z-index: -1;
+            filter: brightness(0.8) saturate(1.1); /* 稍微降低亮度并增强饱和度 */
+            transition: background-image 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* 页面内容样式 */
+        .content {
+            position: relative;
+            z-index: 1;
+            padding: 50px;
+            text-align: center;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            animation: fadeIn 1s ease-out 0.2s both;
+        }
+        
+        .content h1 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            animation: fadeIn 1s ease-out 0.4s both;
+        }
+        
+        .content p {
+            font-size: 1.2rem;
+            max-width: 800px;
+            margin: 0 auto;
+            animation: fadeIn 1s ease-out 0.6s both;
+        }
+        
+        /* 设置按钮样式 */
+        #settings-button {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            animation: breathe 3s ease-in-out infinite;
+        }
+        
+        #settings-button:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+            animation: none;
+            box-shadow: 0 0 0 0 rgba(26, 115, 232, 0.7);
+        }
+        
+        #settings-button:active {
+            animation: pulse 1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* 悬浮窗样式 */
+        #settings-panel {
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            width: 300px;
+            background-color: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            z-index: 9;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+        }
+        
+        #settings-panel.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        
+        #settings-panel h3 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.2rem;
+        }
+        
+        /* 上传按钮样式 */
+        .upload-container {
+            position: relative;
+            width: 100%;
+            height: 100px;
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background-color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        
+        .upload-container:hover {
+            border-color: #1a73e8;
+            background-color: rgba(255, 255, 255, 0.8);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .upload-container::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent 49%, rgba(26, 115, 232, 0.1) 50%, transparent 51%);
+            background-size: 10px 10px;
+            animation: moveGrid 20s linear infinite;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .upload-container:hover::after {
+            opacity: 1;
+        }
+        
+        @keyframes moveGrid {
+            0% {
+                background-position: 0 0;
+            }
+            100% {
+                background-position: 100px 100px;
+            }
+        }
+        
+        .upload-icon {
+            font-size: 24px; /* 调小图标大小 */
+            color: #999;
+            margin-bottom: 8px;
+        }
+        
+        .upload-text {
+            color: #666;
+            font-size: 0.8rem; /* 调小文字大小 */
+        }
+        
+        #image-upload {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+        
+        /* 预设背景图片样式 */
+        .preset-backgrounds {
+            margin-top: 20px;
+            background-color: transparent; /* 窗格改为纯透明 */
+            border-radius: 8px;
+            padding: 10px;
+            position: relative;
+        }
+        
+        .preset-backgrounds h4 {
+            color: #333; /* 文字颜色改回深色 */
+            margin-bottom: 15px;
+            font-size: 1rem;
+            text-align: center; /* 文字居中 */
+            border-radius: 4px;
+        }
+        
+        .preset-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            padding-bottom: 10px; /* 底部添加一些间距 */
+            max-height: 150px; /* 设置高度以显示两排图片 */
+            overflow: hidden; /* 隐藏超出部分 */
+        }
+        
+        /* 翻页控制按钮 */
+        .pagination-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+            padding: 0 5px;
+            min-height: 30px;
+        }
+        
+        .pagination-btn {
+            background-color: #1a73e8;
+            border: 1px solid #1a73e8;
+            color: white;
+            border-radius: 5px;
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 11px;
+            line-height: 1;
+            white-space: nowrap;
+        }
+        
+        .pagination-btn:hover {
+            background-color: #1557b0;
+            border-color: #1557b0;
+        }
+        
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background-color: #ccc;
+            border-color: #ccc;
+        }
+        
+        .pagination-info {
+            display: flex;
+            align-items: center;
+            font-size: 11px;
+            color: #666;
+            line-height: 1;
+            white-space: nowrap;
+            flex: 0 0 auto;
+            text-align: center;
+            min-width: 80px;
+        }
+        
+        .preset-image {
+            width: 100%;
+            height: 60px;
+            border-radius: 5px;
+            cursor: pointer;
+            object-fit: cover;
+            border: 2px solid transparent;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .preset-image:hover {
+            border-color: #1a73e8;
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(26, 115, 232, 0.3);
+        }
+        
+        .preset-image.selected {
+            border-color: #1a73e8;
+            box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.3);
+        }
+        
+        .preset-image.selected::after {
+            content: '✓';
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            background-color: #1a73e8;
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        /* 关闭按钮样式 */
+        .close-button {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: #666;
+            transition: color 0.3s ease;
+        }
+        
+        .close-button:hover {
+            color: #333;
+        }
+        
+        /* 设置面板选项卡样式 */
+        .panel-tabs-container {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .panel-tab-button {
+            padding: 10px 20px;
+            background: transparent;
+            border: none;
+            color: black;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .panel-tab-button:hover {
+            color: black;
+        }
+        
+        .panel-tab-button.active {
+            color: black;
+            border-bottom: 3px solid #1a73e8;
+        }
+        
+        /* 设置面板内容区域 */
+        .panel-tab-content-container {
+            min-height: 300px;
+        }
+        
+        .panel-tab-content {
+            display: none;
+        }
+        
+        .panel-tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        /* 滑块样式 */
+        .opacity-control {
+            margin-bottom: 20px;
+        }
+        
+        .opacity-control label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 18px;
+            color: black;
+            font-weight: 500;
+        }
+        
+        .opacity-control input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.3);
+            outline: none;
+            -webkit-appearance: none;
+            border: 1px solid rgba(0, 0, 0, 0.3);
+        }
+        
+        .opacity-control input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #1a73e8;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            transition: all 0.2s ease;
+        }
+        
+        .opacity-control input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .opacity-control input[type="range"]::-moz-range-thumb {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #1a73e8;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            transition: all 0.2s ease;
+        }
+        
+        .opacity-control input[type="range"]::-moz-range-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .opacity-value {
+            font-size: 16px;
+            color: black;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        
+        /* 预设透明度按钮 */
+        .preset-opacity-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .preset-opacity-button {
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid black;
+            border-radius: 8px;
+            color: black;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+        
+        .preset-opacity-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(26, 115, 232, 0.1), transparent);
+            transition: left 0.6s ease;
+            z-index: -1;
+        }
+        
+        .preset-opacity-button:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .preset-opacity-button:hover::before {
+            left: 100%;
+        }
+        
+        .preset-opacity-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* 示例窗口样式 */
+        .glass-card {
+            position: relative;
+            z-index: 2;
+            width: 80%;
+            max-width: 800px;
+            min-height: 200px;
+            height: auto;
+            margin: 100px auto 50px;
+            background-color: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: fadeIn 1s ease-out 0.8s both;
+        }
+        
+        .glass-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+        
+        .window-content {
+            padding: 30px;
+            width: 100%;
+            color: white;
+            text-align: center;
+            animation: fadeIn 1s ease-out 1s both;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .content {
+                padding: 30px;
+            }
+            
+            .content h1 {
+                font-size: 2rem;
+            }
+            
+            #settings-panel {
+                width: 90vw;
+                max-width: 300px;
+                right: 5vw;
+                bottom: 100px;
+            }
+            
+            .glass-card {
+                width: 90%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 背景图片容器 -->
+    <div id="background-image"></div>
+    
+    <!-- 页面内容 -->
+    <div class="content">
+        <h1>背景与窗口设置</h1>
+        <p>这是一个独立的功能页面，包含背景设置和窗口透明度调节功能。</p>
+    </div>
+    
+    <!-- 示例窗口 -->
+    <div class="glass-card">
+        <div class="window-content">
+            <h2>示例窗口</h2>
+            <p>这个窗口的透明度和模糊效果可以通过右侧的设置面板进行调整。</p>
+            <p>尝试更改设置，看看效果如何变化！</p>
+        </div>
+    </div>
+    
+    <!-- 设置按钮 -->
+    <button id="settings-button">⚙️</button>
+    
+    <!-- 悬浮设置面板 -->
+    <div id="settings-panel">
+        <button class="close-button" id="close-panel">×</button>
+        <h3>设置</h3>
+        
+        <!-- 设置面板选项卡 -->
+        <div class="panel-tabs-container">
+            <button class="panel-tab-button active" data-panel-tab="window">窗口设置</button>
+            <button class="panel-tab-button" data-panel-tab="background">背景设置</button>
+        </div>
+        
+        <!-- 设置面板内容区域 -->
+        <div class="panel-tab-content-container">
+            <!-- 窗口透明虚化设置选项卡内容 -->
+            <div class="panel-tab-content active" id="window-tab">
+                <h4 style="margin-bottom: 20px;">窗口透明虚化设置</h4>
+                
+                <!-- 背景透明度控制 -->
+                <div class="opacity-control">
+                    <label for="background-opacity">背景透明度</label>
+                    <input type="range" id="background-opacity" min="5" max="30" value="15">
+                    <div class="opacity-value" id="background-opacity-value">当前值: 15%</div>
+                </div>
+                
+                <!-- 模糊强度控制 -->
+                <div class="opacity-control">
+                    <label for="blur-intensity">模糊强度</label>
+                    <input type="range" id="blur-intensity" min="0" max="20" value="12">
+                    <div class="opacity-value" id="blur-intensity-value">当前值: 12px</div>
+                </div>
+                
+                <!-- 预设透明度按钮 -->
+                <h4 style="margin: 20px 0 10px;">快速预设</h4>
+                <div class="preset-opacity-buttons">
+                    <button class="preset-opacity-button" data-background="5" data-blur="8">清晰</button>
+                    <button class="preset-opacity-button" data-background="15" data-blur="12">标准</button>
+                    <button class="preset-opacity-button" data-background="25" data-blur="18">模糊</button>
+                </div>
+            </div>
+            
+            <!-- 背景图片设置选项卡内容 -->
+            <div class="panel-tab-content" id="background-tab">
+                <h4 style="margin-bottom: 20px;">背景图片设置</h4>
+                
+                <!-- 随机背景按钮 -->
+                <button id="random-background-button" class="preset-opacity-button" style="width: 100%; margin-bottom: 20px;">
+                    🔄 随机更换背景
+                </button>
+                
+                <!-- 图片上传区域 -->
+                <div class="upload-container">
+                    <div class="upload-icon">📷</div>
+                    <div class="upload-text">点击上传背景图片</div>
+                    <input type="file" id="image-upload" accept="image/*">
+                </div>
+                
+                <!-- 预设背景图片 -->
+                <div class="preset-backgrounds">
+                    <h4>预设背景</h4>
+                    <div class="preset-grid">
+                        <img class="preset-image" src="images/background/bg (1).jpg" alt="预设背景1" data-url="images/background/bg (1).jpg">
+                        <img class="preset-image" src="images/background/bg (2).jpg" alt="预设背景2" data-url="images/background/bg (2).jpg">
+                        <img class="preset-image" src="images/background/bg (3).jpg" alt="预设背景3" data-url="images/background/bg (3).jpg">
+                        <img class="preset-image" src="images/background/bg (4).jpg" alt="预设背景4" data-url="images/background/bg (4).jpg">
+                        <img class="preset-image" src="images/background/bg (1).png" alt="预设背景5" data-url="images/background/bg (1).png">
+                        <img class="preset-image" src="images/background/bg (2).png" alt="预设背景6" data-url="images/background/bg (2).png">
+                        <img class="preset-image" src="images/background/bg (3).png" alt="预设背景7" data-url="images/background/bg (3).png">
+                        <img class="preset-image" src="images/background/bg (4).png" alt="预设背景8" data-url="images/background/bg (4).png">
+                        <img class="preset-image" src="images/background/bg (6).png" alt="预设背景9" data-url="images/background/bg (6).png">
+                        <img class="preset-image" src="images/background/bg (7).png" alt="预设背景10" data-url="images/background/bg (7).png">
+                        <img class="preset-image" src="images/background/bg (8).png" alt="预设背景11" data-url="images/background/bg (8).png">
+                        <img class="preset-image" src="images/background/bg (11).png" alt="预设背景12" data-url="images/background/bg (11).png">
+                        <img class="preset-image" src="images/background/bg (13).png" alt="预设背景13" data-url="images/background/bg (13).png">
+                        <img class="preset-image" src="images/background/bg (14).png" alt="预设背景14" data-url="images/background/bg (14).png">
+                        <img class="preset-image" src="images/background/bg (15).png" alt="预设背景15" data-url="images/background/bg (15).png">
+                    </div>
+                    <!-- 翻页控制按钮 -->
+                    <div class="pagination-controls">
+                        <button class="pagination-btn" id="prev-page">上一页</button>
+                        <div class="pagination-info" id="page-info">第 1 页 / 共 2 页</div>
+                        <button class="pagination-btn" id="next-page">下一页</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 获取DOM元素
+        const settingsButton = document.getElementById('settings-button');
+        const settingsPanel = document.getElementById('settings-panel');
+        const closePanelButton = document.getElementById('close-panel');
+        const backgroundImage = document.getElementById('background-image');
+        const imageUpload = document.getElementById('image-upload');
+        const presetImages = document.querySelectorAll('.preset-image');
+        const presetGrid = document.querySelector('.preset-grid');
+        const prevPageButton = document.getElementById('prev-page');
+        const nextPageButton = document.getElementById('next-page');
+        const pageInfo = document.getElementById('page-info');
+        const glassCard = document.querySelector('.glass-card');
+        
+        // 翻页相关变量
+        const imagesPerPage = 6; // 每页显示6张图片
+        let currentPage = 1;
+        let totalPages = Math.ceil(presetImages.length / imagesPerPage);
+        
+        // 初始化预设图片数组（用于分页展示）
+        const allPresetImages = Array.from(presetImages);
+        
+        // 切换设置面板显示/隐藏
+        function toggleSettingsPanel() {
+            settingsPanel.classList.toggle('show');
+        }
+
+        // 关闭设置面板
+        function closeSettingsPanel() {
+            settingsPanel.classList.remove('show');
+        }
+
+        // 设置背景图片
+        function setBackgroundImage(imageUrl) {
+            backgroundImage.style.backgroundImage = `url('${imageUrl}')`;
+            
+            // 更新选中状态
+            document.querySelectorAll('.preset-image').forEach(img => {
+                img.classList.remove('selected');
+                if (img.getAttribute('data-url') === imageUrl) {
+                    img.classList.add('selected');
+                }
+            });
+        }
+
+        // 处理图片上传
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                // 验证文件类型
+                if (!file.type.match('image.*')) {
+                    alert('请上传图片文件！');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    // 成功加载后设置背景图片
+                    setBackgroundImage(e.target.result);
+                    closeSettingsPanel();
+                    
+                    // 重置文件输入，允许重复上传同一文件
+                    event.target.value = '';
+                };
+                
+                reader.onerror = function() {
+                    alert('图片读取失败，请重试！');
+                };
+                
+                reader.readAsDataURL(file);
+            }
+        }
+        
+        // 显示指定页的图片
+        function showPage(pageNumber) {
+            if (pageNumber < 1) pageNumber = 1;
+            if (pageNumber > totalPages) pageNumber = totalPages;
+            
+            currentPage = pageNumber;
+            
+            // 清空当前网格
+            presetGrid.innerHTML = '';
+            
+            // 计算要显示的图片范围
+            const startIndex = (currentPage - 1) * imagesPerPage;
+            const endIndex = Math.min(startIndex + imagesPerPage, allPresetImages.length);
+            
+            // 添加当前页的图片
+            for (let i = startIndex; i < endIndex; i++) {
+                const image = allPresetImages[i].cloneNode(true);
+                presetGrid.appendChild(image);
+            }
+            
+            // 更新页码信息
+            pageInfo.textContent = `第 ${currentPage} 页 / 共 ${totalPages} 页`;
+            
+            // 更新按钮状态
+            prevPageButton.disabled = currentPage === 1;
+            nextPageButton.disabled = currentPage === totalPages;
+            
+            // 为新添加的图片添加点击事件
+            const newPresetImages = presetGrid.querySelectorAll('.preset-image');
+            newPresetImages.forEach(image => {
+                image.addEventListener('click', function() {
+                    const imageUrl = this.getAttribute('data-url');
+                    setBackgroundImage(imageUrl);
+                    closeSettingsPanel();
+                });
+            });
+        }
+        
+        // 初始化显示第一页
+        showPage(1);
+        
+        // 背景图片列表 - 使用本地图片
+        const backgroundImages = [
+            'images/background/bg (1).jpg',
+            'images/background/bg (2).jpg',
+            'images/background/bg (3).jpg',
+            'images/background/bg (4).jpg',
+            'images/background/bg (1).png',
+            'images/background/bg (2).png',
+            'images/background/bg (3).png',
+            'images/background/bg (4).png',
+            'images/background/bg (6).png',
+            'images/background/bg (7).png',
+            'images/background/bg (8).png',
+            'images/background/bg (11).png',
+            'images/background/bg (13).png',
+            'images/background/bg (14).png',
+            'images/background/bg (15).png'
+        ];
+        
+        // 随机选择背景图片
+        function setRandomBackground() {
+            // 从背景图片数组中随机选择一个
+            const randomIndex = Math.floor(Math.random() * backgroundImages.length);
+            const randomImage = backgroundImages[randomIndex];
+            
+            // 设置为背景图片
+            setBackgroundImage(randomImage);
+        }
+        
+        // 随机背景按钮事件监听
+        const randomBackgroundButton = document.getElementById('random-background-button');
+        randomBackgroundButton.addEventListener('click', function() {
+            setRandomBackground();
+            closeSettingsPanel();
+        });
+        
+        // 事件监听
+        settingsButton.addEventListener('click', toggleSettingsPanel);
+        closePanelButton.addEventListener('click', closeSettingsPanel);
+        imageUpload.addEventListener('change', handleImageUpload);
+        prevPageButton.addEventListener('click', () => showPage(currentPage - 1));
+        nextPageButton.addEventListener('click', () => showPage(currentPage + 1));
+        
+        // 为上传容器添加点击事件，确保点击时触发文件选择
+        const uploadContainer = document.querySelector('.upload-container');
+        uploadContainer.addEventListener('click', function() {
+            document.getElementById('image-upload').click();
+        });
+        
+        // 页面加载时设置随机背景图片
+        document.addEventListener('DOMContentLoaded', setRandomBackground);
+        
+        // 点击面板外部关闭面板
+        document.addEventListener('click', function(event) {
+            if (!settingsButton.contains(event.target) && 
+                !settingsPanel.contains(event.target) && 
+                settingsPanel.classList.contains('show')) {
+                closeSettingsPanel();
+            }
+        });
+        
+        // 设置面板选项卡切换功能
+        const panelTabButtons = document.querySelectorAll('.panel-tab-button');
+        const panelTabContents = document.querySelectorAll('.panel-tab-content');
+        
+        // 面板选项卡切换函数
+        function switchPanelTab(tabName) {
+            // 移除所有选项卡按钮的激活状态
+            panelTabButtons.forEach(button => {
+                button.classList.remove('active');
+            });
+            
+            // 隐藏所有选项卡内容
+            panelTabContents.forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // 添加当前选项卡按钮的激活状态
+            const activeButton = document.querySelector(`[data-panel-tab="${tabName}"]`);
+            activeButton.classList.add('active');
+            
+            // 显示当前选项卡内容
+            const activeContent = document.getElementById(`${tabName}-tab`);
+            activeContent.classList.add('active');
+        }
+        
+        // 为每个设置面板选项卡按钮添加点击事件
+        panelTabButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const tabName = this.getAttribute('data-panel-tab');
+                switchPanelTab(tabName);
+            });
+        });
+        
+        // 窗口透明度设置功能
+        const backgroundOpacitySlider = document.getElementById('background-opacity');
+        const blurIntensitySlider = document.getElementById('blur-intensity');
+        const backgroundOpacityValue = document.getElementById('background-opacity-value');
+        const blurIntensityValue = document.getElementById('blur-intensity-value');
+        const presetOpacityButtons = document.querySelectorAll('.preset-opacity-button');
+        
+        // 更新背景透明度
+        function updateBackgroundOpacity(value) {
+            const opacity = value / 100;
+            glassCard.style.backgroundColor = `rgba(255, 255, 255, ${opacity})`;
+            backgroundOpacityValue.textContent = `当前值: ${value}%`;
+        }
+        
+        // 更新模糊程度
+        function updateBlurIntensity(value) {
+            glassCard.style.backdropFilter = `blur(${value}px)`;
+            glassCard.style.webkitBackdropFilter = `blur(${value}px)`;
+            blurIntensityValue.textContent = `当前值: ${value}px`;
+        }
+        
+        // 初始化设置
+        updateBackgroundOpacity(backgroundOpacitySlider.value);
+        updateBlurIntensity(blurIntensitySlider.value);
+        
+        // 为滑块添加事件监听
+        backgroundOpacitySlider.addEventListener('input', function() {
+            updateBackgroundOpacity(this.value);
+        });
+        
+        blurIntensitySlider.addEventListener('input', function() {
+            updateBlurIntensity(this.value);
+        });
+        
+        // 为预设按钮添加点击事件
+        presetOpacityButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const backgroundOpacity = this.getAttribute('data-background');
+                const blurIntensity = this.getAttribute('data-blur');
+                
+                backgroundOpacitySlider.value = backgroundOpacity;
+                blurIntensitySlider.value = blurIntensity;
+                
+                updateBackgroundOpacity(backgroundOpacity);
+                updateBlurIntensity(blurIntensity);
+            });
+        });
+    </script>
+</body>
+</html>

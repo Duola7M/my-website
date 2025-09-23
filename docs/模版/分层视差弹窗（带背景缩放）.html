@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>分层视差弹窗</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+
+    /* 背景容器：承载页面内容，将被缩放模糊 */
+    .background-container {
+      min-height: 100vh;
+      padding: 60px 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      transition: transform 0.4s ease, filter 0.4s ease; /* 背景过渡 */
+    }
+
+    /* 页面内容 */
+    .content {
+      max-width: 800px;
+      margin: 0 auto;
+      color: white;
+      text-align: center;
+    }
+    .content h1 { font-size: 40px; margin-bottom: 20px; }
+    .content p { font-size: 18px; margin-bottom: 40px; line-height: 1.6; }
+
+    /* 打开弹窗按钮 */
+    .open-modal-btn {
+      padding: 14px 32px;
+      border: none;
+      border-radius: 50px;
+      background: white;
+      color: #667eea;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: box-shadow 0.3s;
+    }
+    .open-modal-btn:hover { box-shadow: 0 4px 20px rgba(255,255,255,0.3); }
+
+    /* 遮罩层 */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0,0,0,0.6);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.4s ease, visibility 0.4s ease;
+      z-index: 10;
+    }
+
+    /* 弹窗：从下往上滑 */
+    .modal {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) translateY(20px); /* 初始向下偏移 */
+      width: 90%;
+      max-width: 550px;
+      background: white;
+      border-radius: 12px;
+      padding: 40px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.4s ease, transform 0.4s ease, visibility 0.4s ease;
+      z-index: 20;
+    }
+
+    /* 弹窗内容 */
+    .modal h2 { color: #333; margin-bottom: 25px; font-size: 24px; }
+    .modal p { color: #666; line-height: 1.7; margin-bottom: 30px; }
+    .close-modal-btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      background: #667eea;
+      color: white;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .close-modal-btn:hover { background: #5a6edb; }
+
+    /* 激活状态：背景缩放模糊 + 弹窗显示 */
+    .background-container.active {
+      transform: scale(0.98); /* 背景轻微缩小 */
+      filter: blur(4px); /* 背景模糊 */
+    }
+    .modal-overlay.active { opacity: 1; visibility: visible; }
+    .modal.active {
+      opacity: 1;
+      visibility: visible;
+      transform: translate(-50%, -50%) translateY(0); /* 恢复居中 */
+    }
+  </style>
+</head>
+<body>
+  <!-- 背景容器（将被缩放模糊） -->
+  <div class="background-container">
+    <div class="content">
+      <h1>分层视差过渡效果</h1>
+      <p>点击下方按钮，背景会轻微缩放并模糊，弹窗从下往上滑入，营造深度感和聚焦效果。</p>
+      <button class="open-modal-btn">打开视差弹窗</button>
+    </div>
+  </div>
+
+  <!-- 遮罩层 -->
+  <div class="modal-overlay"></div>
+
+  <!-- 弹窗 -->
+  <div class="modal">
+    <h2>视差弹窗标题</h2>
+    <p>这种动画通过“背景弱化”和“弹窗强化”的对比，引导用户注意力集中在弹窗内容上，适合需要用户重点操作的场景（如登录、确认操作、产品详情）。</p>
+    <button class="close-modal-btn">关闭弹窗</button>
+  </div>
+
+  <script>
+    const openBtn = document.querySelector('.open-modal-btn');
+    const closeBtn = document.querySelector('.close-modal-btn');
+    const modal = document.querySelector('.modal');
+    const overlay = document.querySelector('.modal-overlay');
+    const background = document.querySelector('.background-container');
+
+    function openModal() {
+      modal.classList.add('active');
+      overlay.classList.add('active');
+      background.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+      modal.classList.remove('active');
+      overlay.classList.remove('active');
+      background.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    openBtn.addEventListener('click', openModal);
+    closeBtn.addEventListener('click', closeModal);
+    overlay.addEventListener('click', closeModal);
+  </script>
+</body>
+</html>

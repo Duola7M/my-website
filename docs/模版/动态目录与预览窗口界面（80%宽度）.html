@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>动态目录与预览窗口</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  
+  <!-- 配置Tailwind自定义颜色和字体 -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#165DFF',
+            secondary: '#36CFC9',
+            dark: '#1D2129',
+            light: '#F2F3F5',
+            neutral: '#86909C'
+          },
+          fontFamily: {
+            inter: ['Inter', 'system-ui', 'sans-serif'],
+          },
+        },
+      }
+    }
+  </script>
+  
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .transition-all-300 {
+        transition: all 0.3s ease-in-out;
+      }
+      .shadow-soft {
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+      }
+      .sidebar-item-hover {
+        @apply hover:bg-primary/10 hover:text-primary transition-all duration-200;
+      }
+    }
+  </style>
+</head>
+<body class="font-inter bg-gray-100 text-dark h-screen overflow-hidden flex flex-col items-center justify-center p-4">
+  <!-- 主容器 - 占屏幕80%宽度 -->
+  <div class="w-[80%] h-[90vh] bg-white rounded-xl shadow-lg overflow-hidden flex flex-col">
+    <!-- 顶部导航栏 -->
+    <header class="h-16 bg-white shadow-sm flex items-center justify-between px-6 z-10">
+      <div class="flex items-center space-x-2">
+        <i class="fa fa-bars text-primary text-xl"></i>
+        <h1 class="text-xl font-semibold">动态视图</h1>
+      </div>
+      <div class="flex items-center space-x-4">
+        <button id="toggleBtn" class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg transition-all duration-200 flex items-center">
+          <i class="fa fa-eye mr-2"></i>
+          <span>显示预览</span>
+        </button>
+        <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+          <i class="fa fa-user text-neutral"></i>
+        </div>
+      </div>
+    </header>
+
+    <!-- 主内容区域 -->
+    <main class="flex-1 relative overflow-hidden">
+      <!-- 目录窗口 -->
+      <div id="sidebar" class="absolute top-0 left-0 h-full w-full bg-white shadow-soft transition-all duration-500 ease-in-out z-20 flex flex-col">
+        <!-- 目录标题栏 -->
+        <div class="h-14 border-b flex items-center justify-between px-6">
+          <h2 class="font-medium text-lg">目录导航</h2>
+          <div class="flex space-x-3">
+            <button class="p-2 rounded hover:bg-gray-100 transition-all">
+              <i class="fa fa-search text-neutral"></i>
+            </button>
+            <button class="p-2 rounded hover:bg-gray-100 transition-all">
+              <i class="fa fa-ellipsis-v text-neutral"></i>
+            </button>
+          </div>
+        </div>
+        
+        <!-- 目录内容 -->
+        <div class="flex-1 overflow-y-auto p-4">
+          <ul class="space-y-1">
+            <!-- 目录项 - 带子菜单 -->
+            <li class="mb-1">
+              <div class="sidebar-item p-3 rounded-lg flex items-center justify-between cursor-pointer bg-primary/10 text-primary font-medium">
+                <div class="flex items-center">
+                  <i class="fa fa-file-text-o mr-3 w-5 text-center"></i>
+                  <span>文档介绍</span>
+                </div>
+                <i class="fa fa-chevron-down text-xs"></i>
+              </div>
+              <ul class="pl-10 mt-1 space-y-1">
+                <li>
+                  <div class="sidebar-item p-2 rounded-lg flex items-center cursor-pointer sidebar-item-hover">
+                    <i class="fa fa-angle-right mr-3 w-5 text-center text-xs"></i>
+                    <span>概述</span>
+                  </div>
+                </li>
+                <li>
+                  <div class="sidebar-item p-2 rounded-lg flex items-center cursor-pointer sidebar-item-hover">
+                    <i class="fa fa-angle-right mr-3 w-5 text-center text-xs"></i>
+                    <span>快速开始</span>
+                  </div>
+                </li>
+              </ul>
+            </li>
+            
+            <!-- 其他目录项 -->
+            <li>
+              <div class="sidebar-item p-3 rounded-lg flex items-center justify-between cursor-pointer sidebar-item-hover">
+                <div class="flex items-center">
+                  <i class="fa fa-cog mr-3 w-5 text-center"></i>
+                  <span>系统设置</span>
+                </div>
+                <i class="fa fa-chevron-right text-xs"></i>
+              </div>
+            </li>
+            
+            <li>
+              <div class="sidebar-item p-3 rounded-lg flex items-center justify-between cursor-pointer sidebar-item-hover">
+                <div class="flex items-center">
+                  <i class="fa fa-users mr-3 w-5 text-center"></i>
+                  <span>用户管理</span>
+                </div>
+                <i class="fa fa-chevron-right text-xs"></i>
+              </div>
+            </li>
+            
+            <li>
+              <div class="sidebar-item p-3 rounded-lg flex items-center justify-between cursor-pointer sidebar-item-hover">
+                <div class="flex items-center">
+                  <i class="fa fa-bar-chart mr-3 w-5 text-center"></i>
+                  <span>数据分析</span>
+                </div>
+                <i class="fa fa-chevron-right text-xs"></i>
+              </div>
+            </li>
+            
+            <li>
+              <div class="sidebar-item p-3 rounded-lg flex items-center justify-between cursor-pointer sidebar-item-hover">
+                <div class="flex items-center">
+                  <i class="fa fa-question-circle mr-3 w-5 text-center"></i>
+                  <span>帮助中心</span>
+                </div>
+                <i class="fa fa-chevron-right text-xs"></i>
+              </div>
+            </li>
+            
+            <li>
+              <div class="sidebar-item p-3 rounded-lg flex items-center justify-between cursor-pointer sidebar-item-hover">
+                <div class="flex items-center">
+                  <i class="fa fa-history mr-3 w-5 text-center"></i>
+                  <span>操作历史</span>
+                </div>
+                <i class="fa fa-chevron-right text-xs"></i>
+              </div>
+            </li>
+          </ul>
+        </div>
+        
+        <!-- 目录底部 -->
+        <div class="p-4 border-t">
+          <div class="bg-light rounded-lg p-3">
+            <div class="flex items-start">
+              <i class="fa fa-info-circle text-primary mt-1 mr-3"></i>
+              <div>
+                <h3 class="font-medium text-sm">提示</h3>
+                <p class="text-neutral text-xs mt-1">点击右上角按钮可以切换到预览模式</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 预览窗口 -->
+      <div id="preview" class="absolute top-0 right-0 h-full w-0 bg-white shadow-soft transition-all duration-500 ease-in-out z-10 overflow-hidden">
+        <!-- 预览标题栏 -->
+        <div class="h-14 border-b flex items-center justify-between px-6">
+          <h2 class="font-medium text-lg">内容预览</h2>
+          <div class="flex space-x-3">
+            <button class="p-2 rounded hover:bg-gray-100 transition-all">
+              <i class="fa fa-refresh text-neutral"></i>
+            </button>
+            <button class="p-2 rounded hover:bg-gray-100 transition-all">
+              <i class="fa fa-expand text-neutral"></i>
+            </button>
+          </div>
+        </div>
+        
+        <!-- 预览内容 -->
+        <div class="flex-1 overflow-y-auto p-6">
+          <div class="max-w-3xl mx-auto">
+            <h1 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold mb-6">文档介绍</h1>
+            
+            <div class="bg-light/50 rounded-xl p-4 mb-8 border border-gray-200">
+              <div class="flex items-start">
+                <i class="fa fa-lightbulb-o text-yellow-500 text-xl mt-1 mr-3"></i>
+                <p class="text-neutral">本文档提供了系统的基本介绍和使用指南，帮助用户快速了解系统功能和操作方法。</p>
+              </div>
+            </div>
+            
+            <h2 class="text-xl font-semibold mb-4 mt-8">1. 概述</h2>
+            <p class="mb-4 text-gray-700 leading-relaxed">
+              本系统是一个集成了多种功能的管理平台，旨在提供高效、便捷的操作体验。通过直观的界面设计和丰富的功能模块，
+              用户可以轻松完成各种日常管理任务。
+            </p>
+            
+            <h2 class="text-xl font-semibold mb-4 mt-8">2. 快速开始</h2>
+            <p class="mb-4 text-gray-700 leading-relaxed">
+              要开始使用本系统，请按照以下步骤操作：
+            </p>
+            
+            <ul class="list-disc pl-6 mb-6 space-y-2 text-gray-700">
+              <li>登录系统账号</li>
+              <li>在左侧导航栏选择需要使用的功能模块</li>
+              <li>根据页面提示完成相应操作</li>
+              <li>操作完成后可以查看历史记录或生成报表</li>
+            </ul>
+            
+            <div class="mt-8 bg-primary/5 rounded-xl p-5 border border-primary/20">
+              <h3 class="font-medium flex items-center text-primary mb-3">
+                <i class="fa fa-info-circle mr-2"></i>
+                注意事项
+              </h3>
+              <p class="text-sm text-gray-700">
+                请确保您的账号拥有相应的操作权限，如遇问题请联系系统管理员或查看帮助中心获取更多支持。
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // 获取DOM元素
+    const sidebar = document.getElementById('sidebar');
+    const preview = document.getElementById('preview');
+    const toggleBtn = document.getElementById('toggleBtn');
+    
+    // 状态变量
+    let isPreviewVisible = false;
+    
+    // 点击按钮切换视图
+    toggleBtn.addEventListener('click', () => {
+      if (!isPreviewVisible) {
+        // 显示预览窗口
+        sidebar.style.width = '300px';
+        preview.style.width = 'calc(100% - 300px)';
+        toggleBtn.innerHTML = '<i class="fa fa-eye-slash mr-2"></i><span>隐藏预览</span>';
+        
+        // 添加动画效果类
+        sidebar.classList.add('shadow-md');
+        preview.classList.add('opacity-100');
+      } else {
+        // 隐藏预览窗口
+        sidebar.style.width = '100%';
+        preview.style.width = '0';
+        toggleBtn.innerHTML = '<i class="fa fa-eye mr-2"></i><span>显示预览</span>';
+        
+        // 移除动画效果类
+        sidebar.classList.remove('shadow-md');
+        preview.classList.remove('opacity-100');
+      }
+      
+      // 切换状态
+      isPreviewVisible = !isPreviewVisible;
+    });
+    
+    // 为目录项添加点击效果
+    document.querySelectorAll('.sidebar-item').forEach(item => {
+      // 跳过已经激活的项
+      if (!item.classList.contains('bg-primary/10')) {
+        item.addEventListener('click', function() {
+          // 移除其他项的激活状态
+          document.querySelectorAll('.sidebar-item').forEach(el => {
+            el.classList.remove('bg-primary/10', 'text-primary', 'font-medium');
+          });
+          
+          // 添加当前项的激活状态
+          this.classList.add('bg-primary/10', 'text-primary', 'font-medium');
+        });
+      }
+    });
+  </script>
+</body>
+</html>
