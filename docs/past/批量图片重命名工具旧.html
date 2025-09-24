@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>批量图片重命名工具</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .description {
+            color: #7f8c8d;
+            margin-bottom: 20px;
+        }
+        
+        .app-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .upload-section {
+            flex: 1;
+            min-width: 300px;
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .preview-section {
+            flex: 2;
+            min-width: 500px;
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .drop-area {
+            border: 2px dashed #3498db;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+        
+        .drop-area:hover {
+            background-color: #e1f0fa;
+        }
+        
+        .drop-area i {
+            font-size: 48px;
+            color: #3498db;
+            margin-bottom: 10px;
+        }
+        
+        .drop-area p {
+            margin: 10px 0;
+            color: #7f8c8d;
+        }
+        
+        .btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+            display: inline-block;
+        }
+        
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        
+        .btn-download {
+            background-color: #27ae60;
+            margin-top: 20px;
+            width: 100%;
+            padding: 15px;
+            font-weight: bold;
+        }
+        
+        .btn-download:hover {
+            background-color: #219653;
+        }
+        
+        .btn-clear {
+            background-color: #e74c3c;
+            margin-top: 10px;
+        }
+        
+        .btn-clear:hover {
+            background-color: #c0392b;
+        }
+        
+        .rename-options {
+            margin: 20px 0;
+        }
+        
+        .option-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .preview-list {
+            flex: 1;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            border-radius: 5px;
+            padding: 10px;
+        }
+        
+        .preview-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.2s;
+        }
+        
+        .preview-item:hover {
+            background-color: #f9f9f9;
+        }
+        
+        .preview-item img {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 5px;
+            margin-right: 15px;
+        }
+        
+        .preview-name {
+            flex: 1;
+        }
+        
+        .original-name {
+            font-size: 12px;
+            color: #7f8c8d;
+            text-decoration: line-through;
+            margin-right: 10px;
+            display: block;
+        }
+        
+        .new-name {
+            font-weight: 600;
+            color: #27ae60;
+            display: block;
+            margin-top: 5px;
+        }
+        
+        .no-images {
+            text-align: center;
+            color: #7f8c8d;
+            padding: 40px 0;
+        }
+        
+        .counter {
+            background-color: #3498db;
+            color: white;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+        
+        .status-indicator {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            display: none;
+        }
+        
+        .status-success {
+            background-color: #d4edda;
+            color: #155724;
+            display: block;
+        }
+        
+        @media (max-width: 768px) {
+            .app-container {
+                flex-direction: column;
+            }
+            
+            .upload-section, .preview-section {
+                min-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>批量图片重命名工具</h1>
+            <p class="description">上传多张图片，批量重命名并打包下载</p>
+        </header>
+        
+        <div class="app-container">
+            <div class="upload-section">
+                <div class="drop-area" id="dropArea">
+                    <i>📁</i>
+                    <h3>拖放图片到这里</h3>
+                    <p>支持多选 (JPEG, PNG, GIF等)</p>
+                    <p>或者</p>
+                    <input type="file" id="fileInput" accept="image/*" multiple style="display: none;">
+                    <button class="btn" id="browseBtn">选择图片</button>
+                </div>
+                
+                <div class="rename-options">
+                    <div class="option-group">
+                        <label for="prefix">文件名前缀</label>
+                        <input type="text" id="prefix" placeholder="例如: vacation" value="image">
+                    </div>
+                    
+                    <div class="option-group">
+                        <label for="startNumber">起始序号</label>
+                        <input type="number" id="startNumber" value="1" min="1">
+                    </div>
+                </div>
+                
+                <button class="btn btn-download" id="downloadBtn">打包下载所有图片 (ZIP)</button>
+                <button class="btn btn-clear" id="clearBtn">清除所有图片</button>
+                
+                <div class="status-indicator" id="statusIndicator"></div>
+            </div>
+            
+            <div class="preview-section">
+                <div class="preview-header">
+                    <h2>预览 <span id="imageCount">0</span></h2>
+                    <div id="selectedCount">已选择: <span class="counter">0</span></div>
+                </div>
+                <div class="preview-list" id="previewList">
+                    <div class="no-images">尚未上传任何图片</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const dropArea = document.getElementById('dropArea');
+            const fileInput = document.getElementById('fileInput');
+            const browseBtn = document.getElementById('browseBtn');
+            const previewList = document.getElementById('previewList');
+            const prefixInput = document.getElementById('prefix');
+            const startNumberInput = document.getElementById('startNumber');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const statusIndicator = document.getElementById('statusIndicator');
+            const imageCount = document.getElementById('imageCount');
+            const selectedCount = document.getElementById('selectedCount');
+            
+            let uploadedFiles = [];
+            let selectedFiles = new Set();
+            
+            // 点击浏览按钮触发文件选择
+            browseBtn.addEventListener('click', () => {
+                fileInput.click();
+            });
+            
+            // 处理文件选择
+            fileInput.addEventListener('change', handleFiles);
+            
+            // 拖放功能
+            dropArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropArea.style.backgroundColor = '#e1f0fa';
+                dropArea.style.borderColor = '#2980b9';
+            });
+            
+            dropArea.addEventListener('dragleave', () => {
+                dropArea.style.backgroundColor = '';
+                dropArea.style.borderColor = '#3498db';
+            });
+            
+            dropArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropArea.style.backgroundColor = '';
+                dropArea.style.borderColor = '#3498db';
+                
+                if (e.dataTransfer.files.length > 0) {
+                    handleFiles({ target: { files: e.dataTransfer.files } });
+                }
+            });
+            
+            // 处理上传的文件
+            function handleFiles(e) {
+                const files = e.target.files;
+                if (files.length === 0) return;
+                
+                // 清空"No images"消息
+                if (previewList.querySelector('.no-images')) {
+                    previewList.innerHTML = '';
+                }
+                
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    if (!file.type.match('image.*')) continue;
+                    
+                    uploadedFiles.push(file);
+                    
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        createPreviewItem(file, e.target.result, uploadedFiles.length - 1);
+                    };
+                    reader.readAsDataURL(file);
+                }
+                
+                updatePreviews();
+                updateImageCount();
+                fileInput.value = '';
+            }
+            
+            // 创建预览项目
+            function createPreviewItem(file, dataUrl, index) {
+                const item = document.createElement('div');
+                item.className = 'preview-item';
+                item.dataset.index = index;
+                
+                item.innerHTML = `
+                    <img src="${dataUrl}" alt="${file.name}">
+                    <div class="preview-name">
+                        <span class="original-name">${file.name}</span>
+                        <span class="new-name">${generateNewName(file, index)}</span>
+                    </div>
+                `;
+                
+                item.addEventListener('click', () => {
+                    toggleSelection(index, item);
+                });
+                
+                previewList.appendChild(item);
+            }
+            
+            // 切换选择状态
+            function toggleSelection(index, item) {
+                if (selectedFiles.has(index)) {
+                    selectedFiles.delete(index);
+                    item.style.backgroundColor = '';
+                } else {
+                    selectedFiles.add(index);
+                    item.style.backgroundColor = '#e3f2fd';
+                }
+                updateSelectedCount();
+            }
+            
+            // 生成新文件名
+            function generateNewName(file, index) {
+                const prefix = prefixInput.value || 'image';
+                const startNumber = parseInt(startNumberInput.value) || 1;
+                const extension = file.name.split('.').pop();
+                
+                return `${prefix}_${startNumber + index}.${extension}`;
+            }
+            
+            // 更新所有预览
+            function updatePreviews() {
+                const items = previewList.querySelectorAll('.preview-item');
+                
+                items.forEach((item, index) => {
+                    const newNameSpan = item.querySelector('.new-name');
+                    const file = uploadedFiles[index];
+                    
+                    if (file) {
+                        newNameSpan.textContent = generateNewName(file, index);
+                    }
+                });
+            }
+            
+            // 更新图片计数
+            function updateImageCount() {
+                imageCount.textContent = uploadedFiles.length;
+            }
+            
+            // 更新选择计数
+            function updateSelectedCount() {
+                const counter = selectedCount.querySelector('.counter');
+                counter.textContent = selectedFiles.size;
+            }
+            
+            // 监听命名规则变化
+            prefixInput.addEventListener('input', updatePreviews);
+            startNumberInput.addEventListener('input', updatePreviews);
+            
+            // 清除所有图片
+            clearBtn.addEventListener('click', () => {
+                uploadedFiles = [];
+                selectedFiles.clear();
+                previewList.innerHTML = '<div class="no-images">尚未上传任何图片</div>';
+                updateImageCount();
+                updateSelectedCount();
+                showStatus('已清除所有图片', 'success');
+            });
+            
+            // 下载功能
+            downloadBtn.addEventListener('click', async () => {
+                if (uploadedFiles.length === 0) {
+                    showStatus('请先上传图片！', 'error');
+                    return;
+                }
+                
+                try {
+                    downloadBtn.disabled = true;
+                    downloadBtn.textContent = '正在打包中...';
+                    
+                    const zip = new JSZip();
+                    const imgFolder = zip.folder("renamed_images");
+                    
+                    // 添加文件到ZIP
+                    for (let i = 0; i < uploadedFiles.length; i++) {
+                        const file = uploadedFiles[i];
+                        const newName = generateNewName(file, i);
+                        
+                        // 将文件转换为Uint8Array
+                        const arrayBuffer = await readFileAsArrayBuffer(file);
+                        imgFolder.file(newName, arrayBuffer);
+                    }
+                    
+                    // 生成ZIP文件
+                    const zipContent = await zip.generateAsync({type: "blob"});
+                    
+                    // 下载ZIP文件
+                    saveAs(zipContent, "renamed_images.zip");
+                    
+                    showStatus('下载成功！ZIP文件已生成。', 'success');
+                } catch (error) {
+                    console.error('Error creating ZIP file:', error);
+                    showStatus('创建ZIP文件时出错: ' + error.message, 'error');
+                } finally {
+                    downloadBtn.disabled = false;
+                    downloadBtn.textContent = '打包下载所有图片 (ZIP)';
+                }
+            });
+            
+            // 将文件读取为ArrayBuffer
+            function readFileAsArrayBuffer(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = reject;
+                    reader.readAsArrayBuffer(file);
+                });
+            }
+            
+            // 显示状态消息
+            function showStatus(message, type) {
+                statusIndicator.textContent = message;
+                statusIndicator.className = 'status-indicator';
+                
+                if (type === 'success') {
+                    statusIndicator.classList.add('status-success');
+                } else if (type === 'error') {
+                    statusIndicator.style.display = 'block';
+                    statusIndicator.style.backgroundColor = '#f8d7da';
+                    statusIndicator.style.color = '#721c24';
+                }
+                
+                // 3秒后隐藏状态消息
+                setTimeout(() => {
+                    statusIndicator.style.display = 'none';
+                }, 3000);
+            }
+        });
+    </script>
+</body>
+</html>
