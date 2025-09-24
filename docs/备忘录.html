@@ -1,0 +1,2840 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的备忘录</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        // 配置对象，指向后端API
+        const CONFIG = {
+            API_URL: 'http://localhost:3000/api',
+            STORAGE_TYPE: 'backend' // 默认使用后端存储
+        };
+    </script>
+    <style>
+        /* 全局样式重置 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        /* 背景容器样式 */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
+            overflow-x: hidden;
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* 淡入动画 */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* 呼吸动画 */
+        @keyframes breathe {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+        
+        /* 脉冲动画 */
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(26, 115, 232, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(26, 115, 232, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(26, 115, 232, 0);
+            }
+        }
+        
+        /* 背景图片样式 */
+        #background-image {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            z-index: -1;
+            filter: brightness(0.8) saturate(1.1); /* 稍微降低亮度并增强饱和度 */
+            transition: background-image 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* 页面内容样式 */
+        .content {
+            position: relative;
+            z-index: 1;
+            padding: 50px;
+            text-align: center;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            animation: fadeIn 1s ease-out 0.2s both;
+        }
+        
+        .content h1 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            animation: fadeIn 1s ease-out 0.4s both;
+        }
+        
+        .content p {
+            font-size: 1.2rem;
+            max-width: 800px;
+            margin: 0 auto;
+            animation: fadeIn 1s ease-out 0.6s both;
+        }
+        
+        /* 设置按钮样式 */
+        #settings-button {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            animation: breathe 3s ease-in-out infinite;
+        }
+        
+        #settings-button:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+            animation: none;
+            box-shadow: 0 0 0 0 rgba(26, 115, 232, 0.7);
+        }
+        
+        #settings-button:active {
+            animation: pulse 1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* 悬浮窗样式 */
+        #settings-panel {
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            width: 300px;
+            background-color: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            z-index: 9;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+        }
+        
+        #settings-panel.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        
+        #settings-panel h3 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.2rem;
+        }
+        
+        /* 上传按钮样式 */
+        .upload-container {
+            position: relative;
+            width: 100%;
+            height: 100px;
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background-color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        
+        .upload-container:hover {
+            border-color: #1a73e8;
+            background-color: rgba(255, 255, 255, 0.8);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .upload-container::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent 49%, rgba(26, 115, 232, 0.1) 50%, transparent 51%);
+            background-size: 10px 10px;
+            animation: moveGrid 20s linear infinite;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .upload-container:hover::after {
+            opacity: 1;
+        }
+        
+        @keyframes moveGrid {
+            0% {
+                background-position: 0 0;
+            }
+            100% {
+                background-position: 100px 100px;
+            }
+        }
+        
+        .upload-icon {
+            font-size: 24px; /* 调小图标大小 */
+            color: #999;
+            margin-bottom: 8px;
+        }
+        
+        .upload-text {
+            color: #666;
+            font-size: 0.8rem; /* 调小文字大小 */
+        }
+        
+        #image-upload {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+        
+        /* 预设背景图片样式 */
+        .preset-backgrounds {
+            margin-top: 20px;
+            background-color: transparent; /* 窗格改为纯透明 */
+            border-radius: 8px;
+            padding: 10px;
+            position: relative;
+        }
+        
+        .preset-backgrounds h4 {
+            color: #333; /* 文字颜色改回深色 */
+            margin-bottom: 15px;
+            font-size: 1rem;
+            text-align: center; /* 文字居中 */
+            border-radius: 4px;
+        }
+        
+        .preset-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            padding-bottom: 10px; /* 底部添加一些间距 */
+            max-height: 150px; /* 设置高度以显示两排图片 */
+            overflow: hidden; /* 隐藏超出部分 */
+        }
+        
+        /* 翻页控制按钮 */
+        .pagination-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+            padding: 0 5px;
+            min-height: 30px;
+        }
+        
+        .pagination-btn {
+            background-color: #1a73e8;
+            border: 1px solid #1a73e8;
+            color: white;
+            border-radius: 5px;
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 11px;
+            line-height: 1;
+            white-space: nowrap;
+        }
+        
+        .pagination-btn:hover {
+            background-color: #1557b0;
+            border-color: #1557b0;
+        }
+        
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background-color: #ccc;
+            border-color: #ccc;
+        }
+        
+        .pagination-info {
+            display: flex;
+            align-items: center;
+            font-size: 11px;
+            color: #666;
+            line-height: 1;
+            white-space: nowrap;
+            flex: 0 0 auto;
+            text-align: center;
+            min-width: 80px;
+        }
+        
+        .preset-image {
+            width: 100%;
+            height: 60px;
+            border-radius: 5px;
+            cursor: pointer;
+            object-fit: cover;
+            border: 2px solid transparent;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .preset-image:hover {
+            border-color: #1a73e8;
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(26, 115, 232, 0.3);
+        }
+        
+        .preset-image.selected {
+            border-color: #1a73e8;
+            box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.3);
+        }
+        
+        .preset-image.selected::after {
+            content: '✓';
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            background-color: #1a73e8;
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        /* 关闭按钮样式 */
+        .close-button {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: #666;
+            transition: color 0.3s ease;
+        }
+        
+        .close-button:hover {
+            color: #333;
+        }
+        
+        /* 设置面板选项卡样式 */
+        .panel-tabs-container {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .panel-tab-button {
+            padding: 10px 20px;
+            background: transparent;
+            border: none;
+            color: black;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .panel-tab-button:hover {
+            color: black;
+        }
+        
+        .panel-tab-button.active {
+            color: black;
+            border-bottom: 3px solid #1a73e8;
+        }
+        
+        /* 设置面板内容区域 */
+        .panel-tab-content-container {
+            min-height: 300px;
+        }
+        
+        .panel-tab-content {
+            display: none;
+        }
+        
+        .panel-tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        /* 滑块样式 */
+        .opacity-control {
+            margin-bottom: 20px;
+        }
+        
+        .opacity-control label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 18px;
+            color: black;
+            font-weight: 500;
+        }
+        
+        .opacity-control input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.3);
+            outline: none;
+            -webkit-appearance: none;
+            border: 1px solid rgba(0, 0, 0, 0.3);
+        }
+        
+        .opacity-control input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #1a73e8;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            transition: all 0.2s ease;
+        }
+        
+        .opacity-control input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .opacity-control input[type="range"]::-moz-range-thumb {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #1a73e8;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            transition: all 0.2s ease;
+        }
+        
+        .opacity-control input[type="range"]::-moz-range-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .opacity-value {
+            font-size: 16px;
+            color: black;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        
+        /* 预设透明度按钮 */
+        .preset-opacity-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .preset-opacity-button {
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid black;
+            border-radius: 8px;
+            color: black;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+        
+        .preset-opacity-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(26, 115, 232, 0.1), transparent);
+            transition: left 0.6s ease;
+            z-index: -1;
+        }
+        
+        .preset-opacity-button:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .preset-opacity-button:hover::before {
+            left: 100%;
+        }
+        
+        .preset-opacity-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* 透明虚化效果的蓝色球 - 默认隐藏，背景加载完成后显示 */
+        .magic-ball {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 150px;
+            height: 150px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            backdrop-filter: blur(35px);
+            -webkit-backdrop-filter: blur(35px);
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.2), 0 0 60px rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            z-index: 3;
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 0; /* 默认隐藏 */
+        }
+        
+        /* 模糊云效果 - 使用伪元素创建围绕球体的模糊云朵 */
+        .magic-ball::before {
+            content: '';
+            position: absolute;
+            top: -40%;
+            left: -40%;
+            right: -40%;
+            bottom: -40%;
+            background: radial-gradient(circle at center, rgba(255, 255, 255, 0.08), transparent 70%);
+            border-radius: 50%;
+            backdrop-filter: blur(50px);
+            -webkit-backdrop-filter: blur(50px);
+            z-index: -1;
+            animation: cloudPulse 8s ease-in-out infinite;
+        }
+        
+        .magic-ball::after {
+            content: '';
+            position: absolute;
+            top: -30%;
+            left: -30%;
+            right: -30%;
+            bottom: -30%;
+            background: radial-gradient(circle at 30% 40%, rgba(255, 255, 255, 0.06), transparent 70%);
+            border-radius: 50%;
+            backdrop-filter: blur(60px);
+            -webkit-backdrop-filter: blur(60px);
+            z-index: -1;
+            animation: cloudPulse 7s ease-in-out infinite reverse;
+        }
+        
+        /* 模糊云脉动动画 - 更自然的效果 */
+        @keyframes cloudPulse {
+            0%, 100% {
+                transform: scale(1) rotate(0deg);
+                opacity: 0.5;
+            }
+            25% {
+                transform: scale(1.1) rotate(5deg);
+                opacity: 0.7;
+            }
+            50% {
+                transform: scale(1.15) rotate(10deg);
+                opacity: 0.8;
+            }
+            75% {
+                transform: scale(1.1) rotate(5deg);
+                opacity: 0.7;
+            }
+        }
+        
+        .magic-ball-text {
+            position: fixed;
+            bottom: 10%;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 16px;
+            text-align: center;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+            z-index: 3;
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            white-space: nowrap;
+            opacity: 0; /* 默认隐藏，与蓝色球一起显示 */
+        }
+        
+        .magic-ball-text.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .magic-ball:hover {
+            transform: translate(-50%, -50%) scale(1.1);
+            box-shadow: 0 0 40px rgba(255, 255, 255, 0.5), 0 0 80px rgba(255, 255, 255, 0.3);
+        }
+        
+        .magic-ball:active {
+            transform: translate(-50%, -50%) scale(0.95);
+        }
+        
+        .magic-ball.hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: translate(-50%, -50%) scale(0.8);
+        }
+        
+        .glass-card {
+            position: relative;
+            z-index: 2;
+            width: 90%;
+            max-width: 600px;
+            min-height: 600px;
+            height: auto;
+            background-color: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 1s ease-out 0.5s both;
+            animation-play-state: paused;
+        }
+        
+        .glass-card.visible {
+            animation-play-state: running;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .glass-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+        
+        /* 备忘录布局 - 只显示列表 */
+        .memo-layout {
+            height: calc(100% - 80px);
+        }
+        
+        /* 左侧列表栏 - 占据整个宽度 */
+        .memo-sidebar {
+            width: 100%;
+            border-right: none;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .sidebar-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .sidebar-header h3 {
+            margin: 0;
+            font-size: 16px;
+            color: #333;
+        }
+        
+        .sidebar-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+        
+        /* 右侧内容区域 - 默认隐藏，通过模态框显示备忘录内容 */
+        .memo-content-area {
+            display: none;
+        }
+        
+        .memo-content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+        
+        /* 侧边栏备忘录项 */
+        .sidebar-memo-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+        
+        .sidebar-memo-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateX(5px);
+        }
+        
+        .sidebar-memo-item.active {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(26, 115, 232, 0.5);
+            box-shadow: 0 2px 10px rgba(26, 115, 232, 0.1);
+        }
+        
+        .sidebar-memo-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin: 0 0 8px 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: #333;
+        }
+        
+        .sidebar-memo-preview {
+            font-size: 12px;
+            color: #666;
+            margin: 0 0 8px 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+        
+        .sidebar-memo-date {
+            font-size: 11px;
+            color: #999;
+        }
+        
+        /* 备忘录内容展示 */
+        .selected-memo {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .selected-memo h2 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 24px;
+            border-bottom: 2px solid rgba(26, 115, 232, 0.3);
+            padding-bottom: 10px;
+        }
+        
+        .selected-memo-date {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 20px;
+            padding: 10px 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            display: inline-block;
+        }
+        
+        .selected-memo-content {
+            line-height: 1.8;
+            color: #333;
+            font-size: 16px;
+            white-space: pre-wrap;
+            word-break: break-word;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 10px;
+            min-height: 300px;
+        }
+        
+        .selected-memo-actions {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .selected-memo-actions button {
+            padding: 10px 15px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .selected-memo-actions button:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .no-selected-memo {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            color: #999;
+            text-align: center;
+        }
+        
+        /* 无备忘录状态 */
+        .no-memos {
+            text-align: center;
+            color: #999;
+            padding: 40px 20px;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .memo-sidebar {
+                max-height: 300px; /* 增加移动设备上的高度限制 */
+            }
+            
+            .glass-card {
+                width: 95%;
+            }
+        }
+        
+        /* 备忘录样式 */
+        .memo-header {
+            padding: 20px 30px 10px;
+            border-bottom: none;
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .memo-actions-container {
+            padding: 0 30px 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .memo-actions-right {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .memo-header h2 {
+            color: white;
+            font-size: 1.8rem;
+            margin: 0;
+        }
+        
+        /* 移除旧的memo-actions样式 */
+        
+        /* 应用到所有按钮的样式 */
+        .memo-actions-container button,
+        .memo-actions-right button {
+            padding: 10px 15px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .memo-actions-container button:hover,
+        .memo-actions-right button:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .memo-content {
+            padding: 20px;
+            height: calc(100% - 140px);
+            overflow-y: auto;
+        }
+        
+        .memo-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .memo-item {
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .memo-item:hover {
+            background-color: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .memo-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+        
+        .memo-item-title {
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0;
+            flex: 1;
+            word-break: break-word;
+        }
+        
+        .memo-item-date {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 12px;
+            margin-left: 10px;
+            white-space: nowrap;
+        }
+        
+        .memo-item-content {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+            line-height: 1.4;
+            margin: 0;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+        
+        .memo-item-actions {
+            position: absolute;
+            top: 10px;
+            right: -80px;
+            display: flex;
+            gap: 5px;
+            transition: right 0.3s ease;
+        }
+        
+        .memo-item:hover .memo-item-actions {
+            right: 10px;
+        }
+        
+        .memo-item-action {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+        
+        .memo-item-action:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+        
+        .no-memos {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+            padding: 50px 20px;
+        }
+        
+        /* 模态框样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background-color: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow: hidden;
+            animation: fadeIn 0.3s ease 0.1s both;
+        }
+        
+        .modal-header {
+            padding: 20px 30px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h3 {
+            color: white;
+            margin: 0;
+            font-size: 1.5rem;
+        }
+        
+        .modal-body {
+            padding: 20px 30px;
+        }
+        
+        #memo-title-input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            font-weight: 500;
+        }
+        
+        #memo-title-input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        #memo-content-input {
+            width: 100%;
+            padding: 12px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            line-height: 1.5;
+            resize: vertical;
+            min-height: 150px;
+        }
+        
+        #memo-content-input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .memo-date {
+            margin-top: 10px;
+            text-align: right;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 12px;
+        }
+        
+        .modal-footer {
+            padding: 15px 30px 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        .modal-footer button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        #cancel-memo-button {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+        
+        #cancel-memo-button:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+        
+        #save-memo-button {
+            background-color: #1a73e8;
+            color: white;
+        }
+        
+        #save-memo-button:hover {
+            background-color: #1557b0;
+        }
+        
+        /* 滚动条样式 */
+        .memo-content::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .memo-content::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+        
+        .memo-content::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+        }
+        
+        .memo-content::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .content {
+                padding: 30px;
+            }
+            
+            .content h1 {
+                font-size: 2rem;
+            }
+            
+            #settings-panel {
+                width: 90vw;
+                max-width: 300px;
+                right: 5vw;
+                bottom: 100px;
+            }
+            
+            .glass-card {
+                width: 90%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 背景图片容器 -->
+    <div id="background-image"></div>
+    
+    <!-- 透明虚化蓝色球 - 点击它才会显示备忘录窗口 -->
+    <div id="magic-ball" class="magic-ball" onclick="hideMagicBall()"></div>
+    <div class="magic-ball-text">点击屏幕中央开始探索</div>
+    
+    <script>
+    // 简单直接的蓝色球隐藏函数
+        function hideMagicBall() {
+            console.log('蓝色球点击事件触发 - 简单函数');
+            var ball = document.getElementById('magic-ball');
+            var text = document.querySelector('.magic-ball-text');
+            var card = document.querySelector('.glass-card');
+            
+            if (ball && text && card) {
+                console.log('所有元素找到，执行隐藏操作');
+                // 平滑隐藏蓝色球和文字
+                ball.style.opacity = 0;
+                text.style.opacity = 0;
+                // 使用setTimeout确保动画完成后再隐藏元素
+                setTimeout(() => {
+                    ball.style.display = 'none';
+                    text.style.display = 'none';
+                }, 800);
+            text.style.display = 'none';
+            // 显示备忘录窗口
+            card.classList.add('visible');
+        } else {
+            console.log('未找到某些元素:', {ball: !!ball, text: !!text, card: !!card});
+        }
+    }
+    </script>
+    
+    <!-- 备忘录功能窗口 -->
+    <div class="glass-card" id="memo-container">
+        <div class="memo-header">
+            <h2>我的备忘录</h2>
+        </div>
+        
+        <div class="memo-actions-container">
+            <button id="new-memo-button" onclick="window.testOpenNewMemoModal ? window.testOpenNewMemoModal() : console.error('testOpenNewMemoModal函数未定义')">📝 新建备忘录</button>
+            <div class="memo-actions-right">
+                <button id="load-memo-button">📁 加载数据</button>
+                <button id="export-memo-button">📤 导出数据</button>
+                <button id="clear-all-button">🗑️ 清空</button>
+            </div>
+        </div>
+        
+        <div class="memo-layout">
+            <!-- 左侧备忘录列表栏 -->
+            <div class="memo-sidebar">
+                <div class="sidebar-header">
+                    <h3>备忘录列表</h3>
+                </div>
+                <div class="sidebar-list" id="sidebar-list">
+                    <!-- 备忘录列表将动态生成 -->
+                    <div class="no-memos">
+                        <p>📝 还没有备忘录，点击上方按钮创建一个吧！</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 右侧备忘录内容区域 -->
+            <div class="memo-content-area">
+                <div class="memo-content" id="memo-content">
+                    <!-- 选中的备忘录内容将显示在这里 -->
+                    <div class="no-selected-memo">
+                        <p>📋 请从左侧列表选择一个备忘录</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 备忘录编辑模态框 -->
+    <div class="modal" id="memo-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">新建备忘录</h3>
+                <button class="close-button" id="close-modal">×</button>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="memo-title-input" placeholder="请输入标题..." maxlength="50">
+                <textarea id="memo-content-input" placeholder="请输入内容..." rows="8"></textarea>
+                <div class="memo-date">
+                    <span id="memo-date-display">创建于: 2023-07-01 12:00:00</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="cancel-memo-button">取消</button>
+                <button id="save-memo-button">保存</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 设置按钮 -->
+    <button id="settings-button">⚙️</button>
+    
+    <!-- 悬浮设置面板 -->
+    <div id="settings-panel">
+        <button class="close-button" id="close-panel">×</button>
+        <h3>设置</h3>
+        
+        <!-- 设置面板选项卡 -->
+        <div class="panel-tabs-container">
+            <button class="panel-tab-button active" data-panel-tab="window">窗口设置</button>
+            <button class="panel-tab-button" data-panel-tab="background">背景设置</button>
+        </div>
+        
+        <!-- 设置面板内容区域 -->
+        <div class="panel-tab-content-container">
+            <!-- 窗口透明虚化设置选项卡内容 -->
+            <div class="panel-tab-content active" id="window-tab">
+                <h4 style="margin-bottom: 20px;">窗口透明虚化设置</h4>
+                
+                <!-- 背景透明度控制 -->
+                <div class="opacity-control">
+                    <label for="background-opacity">背景透明度</label>
+                    <input type="range" id="background-opacity" min="5" max="30" value="15">
+                    <div class="opacity-value" id="background-opacity-value">当前值: 15%</div>
+                </div>
+                
+                <!-- 模糊强度控制 -->
+                <div class="opacity-control">
+                    <label for="blur-intensity">模糊强度</label>
+                    <input type="range" id="blur-intensity" min="0" max="20" value="12">
+                    <div class="opacity-value" id="blur-intensity-value">当前值: 12px</div>
+                </div>
+                
+                <!-- 预设透明度按钮 -->
+                <h4 style="margin: 20px 0 10px;">快速预设</h4>
+                <div class="preset-opacity-buttons">
+                    <button class="preset-opacity-button" data-background="5" data-blur="8">清晰</button>
+                    <button class="preset-opacity-button" data-background="15" data-blur="12">标准</button>
+                    <button class="preset-opacity-button" data-background="25" data-blur="18">模糊</button>
+                </div>
+            </div>
+            
+            <!-- 背景图片设置选项卡内容 -->
+            <div class="panel-tab-content" id="background-tab">
+                <h4 style="margin-bottom: 20px;">背景图片设置</h4>
+                
+                <!-- 随机背景按钮 -->
+                <button id="random-background-button" class="preset-opacity-button" style="width: 100%; margin-bottom: 20px;">
+                    🔄 随机更换背景
+                </button>
+                
+                <!-- 图片上传区域 -->
+                <div class="upload-container">
+                    <div class="upload-icon">📷</div>
+                    <div class="upload-text">点击上传背景图片</div>
+                    <input type="file" id="image-upload" accept="image/*">
+                </div>
+                
+                <!-- 预设背景图片 -->
+                <div class="preset-backgrounds">
+                    <h4>预设背景</h4>
+                    <div class="preset-grid">
+                        <img class="preset-image" src="images/background/bg (1).jpg" alt="预设背景1" data-url="images/background/bg (1).jpg">
+                        <img class="preset-image" src="images/background/bg (2).jpg" alt="预设背景2" data-url="images/background/bg (2).jpg">
+                        <img class="preset-image" src="images/background/bg (3).jpg" alt="预设背景3" data-url="images/background/bg (3).jpg">
+                        <img class="preset-image" src="images/background/bg (4).jpg" alt="预设背景4" data-url="images/background/bg (4).jpg">
+                        <img class="preset-image" src="images/background/bg (1).png" alt="预设背景5" data-url="images/background/bg (1).png">
+                        <img class="preset-image" src="images/background/bg (2).png" alt="预设背景6" data-url="images/background/bg (2).png">
+                        <img class="preset-image" src="images/background/bg (3).png" alt="预设背景7" data-url="images/background/bg (3).png">
+                        <img class="preset-image" src="images/background/bg (4).png" alt="预设背景8" data-url="images/background/bg (4).png">
+                        <img class="preset-image" src="images/background/bg (6).png" alt="预设背景9" data-url="images/background/bg (6).png">
+                        <img class="preset-image" src="images/background/bg (7).png" alt="预设背景10" data-url="images/background/bg (7).png">
+                        <img class="preset-image" src="images/background/bg (8).png" alt="预设背景11" data-url="images/background/bg (8).png">
+                        <img class="preset-image" src="images/background/bg (11).png" alt="预设背景12" data-url="images/background/bg (11).png">
+                        <img class="preset-image" src="images/background/bg (13).png" alt="预设背景13" data-url="images/background/bg (13).png">
+                        <img class="preset-image" src="images/background/bg (14).png" alt="预设背景14" data-url="images/background/bg (14).png">
+                        <img class="preset-image" src="images/background/bg (15).png" alt="预设背景15" data-url="images/background/bg (15).png">
+                    </div>
+                    <!-- 翻页控制按钮 -->
+                    <div class="pagination-controls">
+                        <button class="pagination-btn" id="prev-page">上一页</button>
+                        <div class="pagination-info" id="page-info">第 1 页 / 共 2 页</div>
+                        <button class="pagination-btn" id="next-page">下一页</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 获取DOM元素
+        const settingsButton = document.getElementById('settings-button');
+        const settingsPanel = document.getElementById('settings-panel');
+        const closePanelButton = document.getElementById('close-panel');
+        const backgroundImage = document.getElementById('background-image');
+        const imageUpload = document.getElementById('image-upload');
+        const presetImages = document.querySelectorAll('.preset-image');
+        const presetGrid = document.querySelector('.preset-grid');
+        const prevPageButton = document.getElementById('prev-page');
+        const nextPageButton = document.getElementById('next-page');
+        const pageInfo = document.getElementById('page-info');
+        const glassCard = document.querySelector('.glass-card');
+        
+        // 翻页相关变量
+        const imagesPerPage = 6; // 每页显示6张图片
+        let currentPage = 1;
+        let totalPages = Math.ceil(presetImages.length / imagesPerPage);
+        
+        // 初始化预设图片数组（用于分页展示）
+        const allPresetImages = Array.from(presetImages);
+        
+        // 切换设置面板显示/隐藏
+        function toggleSettingsPanel() {
+            settingsPanel.classList.toggle('show');
+        }
+
+        // 关闭设置面板
+        function closeSettingsPanel() {
+            settingsPanel.classList.remove('show');
+        }
+
+        // 设置背景图片并返回Promise，表示图片加载完成
+        function setBackgroundImage(imageUrl) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => {
+                    // 图片加载完成后设置为背景
+            backgroundImage.style.backgroundImage = `url('${imageUrl}')`;
+            
+            // 更新选中状态
+            document.querySelectorAll('.preset-image').forEach(img => {
+                img.classList.remove('selected');
+                if (img.getAttribute('data-url') === imageUrl) {
+                    img.classList.add('selected');
+                }
+            });
+            
+            // 图片加载完成后，显示蓝色球和文字
+            setTimeout(() => {
+                const magicBall = document.getElementById('magic-ball');
+                const magicBallText = document.querySelector('.magic-ball-text');
+                
+                if (magicBall) {
+                    magicBall.style.opacity = 0.8; // 设置透明度为0.8，保持半透明效果
+                }
+                
+                if (magicBallText) {
+                    magicBallText.style.opacity = 0.9; // 显示提示文字
+                }
+                
+                resolve();
+            }, 500); // 稍微延迟显示，确保背景完全加载并显示
+                };
+                
+                img.onerror = () => {
+                    console.error('背景图片加载失败:', imageUrl);
+                    // 如果背景图片加载失败，仍然显示蓝色球
+                    const magicBall = document.getElementById('magic-ball');
+                    if (magicBall) {
+                        magicBall.style.opacity = 1;
+                    }
+                    reject(new Error('背景图片加载失败'));
+                };
+                
+                // 开始加载图片
+                img.src = imageUrl;
+            });
+        }
+
+        // 处理图片上传
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                // 验证文件类型
+                if (!file.type.match('image.*')) {
+                    alert('请上传图片文件！');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    // 成功加载后设置背景图片
+                    setBackgroundImage(e.target.result);
+                    closeSettingsPanel();
+                    
+                    // 重置文件输入，允许重复上传同一文件
+                    event.target.value = '';
+                };
+                
+                reader.onerror = function() {
+                    alert('图片读取失败，请重试！');
+                };
+                
+                reader.readAsDataURL(file);
+            }
+        }
+        
+        // 显示指定页的图片
+        function showPage(pageNumber) {
+            if (pageNumber < 1) pageNumber = 1;
+            if (pageNumber > totalPages) pageNumber = totalPages;
+            
+            currentPage = pageNumber;
+            
+            // 清空当前网格
+            presetGrid.innerHTML = '';
+            
+            // 计算要显示的图片范围
+            const startIndex = (currentPage - 1) * imagesPerPage;
+            const endIndex = Math.min(startIndex + imagesPerPage, allPresetImages.length);
+            
+            // 添加当前页的图片
+            for (let i = startIndex; i < endIndex; i++) {
+                const image = allPresetImages[i].cloneNode(true);
+                presetGrid.appendChild(image);
+            }
+            
+            // 更新页码信息
+            pageInfo.textContent = `第 ${currentPage} 页 / 共 ${totalPages} 页`;
+            
+            // 更新按钮状态
+            prevPageButton.disabled = currentPage === 1;
+            nextPageButton.disabled = currentPage === totalPages;
+            
+            // 为新添加的图片添加点击事件
+            const newPresetImages = presetGrid.querySelectorAll('.preset-image');
+            newPresetImages.forEach(image => {
+                image.addEventListener('click', function() {
+                    const imageUrl = this.getAttribute('data-url');
+                    setBackgroundImage(imageUrl);
+                    closeSettingsPanel();
+                });
+            });
+        }
+        
+        // 初始化显示第一页
+        showPage(1);
+        
+        // 背景图片列表 - 使用本地图片
+        const backgroundImages = [
+            'images/background/bg (1).jpg',
+            'images/background/bg (1).png',
+            'images/background/bg (11).png',
+            'images/background/bg (13).png',
+            'images/background/bg (14).png',
+            'images/background/bg (15).png',
+            'images/background/bg (2).jpg',
+            'images/background/bg (2).png',
+            'images/background/bg (3).jpg',
+            'images/background/bg (3).png',
+            'images/background/bg (4).jpg',
+            'images/background/bg (4).png',
+            'images/background/bg (6).png',
+            'images/background/bg (7).png',
+            'images/background/bg (8).png'
+        ];
+        
+        // 随机选择背景图片并返回Promise
+        async function setRandomBackground() {
+            // 从背景图片数组中随机选择一个
+            const randomIndex = Math.floor(Math.random() * backgroundImages.length);
+            const randomImage = backgroundImages[randomIndex];
+            
+            // 设置为背景图片
+            await setBackgroundImage(randomImage);
+        }
+        
+        // 随机背景按钮事件监听
+        const randomBackgroundButton = document.getElementById('random-background-button');
+        randomBackgroundButton.addEventListener('click', function() {
+            setRandomBackground();
+            closeSettingsPanel();
+        });
+        
+        // 事件监听
+        settingsButton.addEventListener('click', toggleSettingsPanel);
+        closePanelButton.addEventListener('click', closeSettingsPanel);
+        imageUpload.addEventListener('change', handleImageUpload);
+        prevPageButton.addEventListener('click', () => showPage(currentPage - 1));
+        nextPageButton.addEventListener('click', () => showPage(currentPage + 1));
+        
+        // 为上传容器添加点击事件，确保点击时触发文件选择
+        const uploadContainer = document.querySelector('.upload-container');
+        uploadContainer.addEventListener('click', function() {
+            document.getElementById('image-upload').click();
+        });
+        
+        // 页面加载时设置随机背景图片
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                await setRandomBackground();
+            } catch (error) {
+                console.error('设置背景图片失败:', error);
+                // 如果背景图片加载失败，仍然显示蓝色球
+                const magicBall = document.getElementById('magic-ball');
+                if (magicBall) {
+                    magicBall.style.opacity = 1;
+                }
+            }
+            
+            // 为蓝色球添加点击事件
+            const magicBall = document.getElementById('magic-ball');
+            const magicBallText = document.querySelector('.magic-ball-text');
+            const glassCard = document.querySelector('.glass-card');
+            
+            if (magicBall && glassCard && magicBallText) {
+                console.log('蓝色球元素找到，绑定点击事件');
+                magicBall.addEventListener('click', function() {
+                    console.log('蓝色球被点击');
+                    // 显示备忘录窗口
+                    glassCard.classList.add('visible');
+                    
+                    // 完全隐藏蓝色球和文字，使用display: none确保元素不显示
+                    magicBall.style.display = 'none';
+                    magicBallText.style.display = 'none';
+                    
+                    console.log('蓝色球已通过display: none设置为隐藏');
+                });
+            } else {
+                console.log('未找到蓝色球或相关元素');
+                console.log('magicBall:', magicBall);
+                console.log('glassCard:', glassCard);
+                console.log('magicBallText:', magicBallText);
+            }
+        });
+        
+        // 点击面板外部关闭面板
+        document.addEventListener('click', function(event) {
+            if (!settingsButton.contains(event.target) && 
+                !settingsPanel.contains(event.target) && 
+                settingsPanel.classList.contains('show')) {
+                closeSettingsPanel();
+            }
+        });
+        
+        // 设置面板选项卡切换功能
+        const panelTabButtons = document.querySelectorAll('.panel-tab-button');
+        const panelTabContents = document.querySelectorAll('.panel-tab-content');
+        
+        // 面板选项卡切换函数
+        function switchPanelTab(tabName) {
+            // 移除所有选项卡按钮的激活状态
+            panelTabButtons.forEach(button => {
+                button.classList.remove('active');
+            });
+            
+            // 隐藏所有选项卡内容
+            panelTabContents.forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // 添加当前选项卡按钮的激活状态
+            const activeButton = document.querySelector(`[data-panel-tab="${tabName}"]`);
+            activeButton.classList.add('active');
+            
+            // 显示当前选项卡内容
+            const activeContent = document.getElementById(`${tabName}-tab`);
+            activeContent.classList.add('active');
+        }
+        
+        // 为每个设置面板选项卡按钮添加点击事件
+        panelTabButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const tabName = this.getAttribute('data-panel-tab');
+                switchPanelTab(tabName);
+            });
+        });
+        
+        // 备忘录功能
+        const memoList = document.getElementById('memo-list');
+        const newMemoButton = document.getElementById('new-memo-button');
+        const clearAllButton = document.getElementById('clear-all-button');
+        const memoModal = document.getElementById('memo-modal');
+        const closeModalButton = document.getElementById('close-modal');
+        const cancelMemoButton = document.getElementById('cancel-memo-button');
+        const saveMemoButton = document.getElementById('save-memo-button');
+        const memoTitleInput = document.getElementById('memo-title-input');
+        const memoContentInput = document.getElementById('memo-content-input');
+        const memoDateDisplay = document.getElementById('memo-date-display');
+        const modalTitle = document.getElementById('modal-title');
+        
+        let memos = [];
+        let editingMemoId = null;
+        
+        // 窗口透明度设置功能
+        const backgroundOpacitySlider = document.getElementById('background-opacity');
+        const blurIntensitySlider = document.getElementById('blur-intensity');
+        const backgroundOpacityValue = document.getElementById('background-opacity-value');
+        const blurIntensityValue = document.getElementById('blur-intensity-value');
+        const presetOpacityButtons = document.querySelectorAll('.preset-opacity-button');
+        
+        // 更新背景透明度
+        function updateBackgroundOpacity(value) {
+            const opacity = value / 100;
+            glassCard.style.backgroundColor = `rgba(255, 255, 255, ${opacity})`;
+            backgroundOpacityValue.textContent = `当前值: ${value}%`;
+        }
+        
+        // 更新模糊程度
+        function updateBlurIntensity(value) {
+            glassCard.style.backdropFilter = `blur(${value}px)`;
+            glassCard.style.webkitBackdropFilter = `blur(${value}px)`;
+            blurIntensityValue.textContent = `当前值: ${value}px`;
+        }
+        
+        // 初始化设置
+        updateBackgroundOpacity(backgroundOpacitySlider.value);
+        updateBlurIntensity(blurIntensitySlider.value);
+        
+        // 为滑块添加事件监听
+        backgroundOpacitySlider.addEventListener('input', function() {
+            updateBackgroundOpacity(this.value);
+        });
+        
+        blurIntensitySlider.addEventListener('input', function() {
+            updateBlurIntensity(this.value);
+        });
+        
+        // 为预设按钮添加点击事件
+        presetOpacityButtons.forEach(button => {
+            if (button.id !== 'random-background-button') {
+                button.addEventListener('click', function() {
+                    const backgroundOpacity = this.getAttribute('data-background');
+                    const blurIntensity = this.getAttribute('data-blur');
+                    
+                    backgroundOpacitySlider.value = backgroundOpacity;
+                    blurIntensitySlider.value = blurIntensity;
+                    
+                    updateBackgroundOpacity(backgroundOpacity);
+                    updateBlurIntensity(blurIntensity);
+                });
+            }
+        });
+        
+        // 格式化日期
+        function formatDate(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const seconds = String(date.getSeconds()).padStart(2, '0');
+            
+            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        }
+        
+        // 后端API调用函数
+        async function fetchFromApi(endpoint, method = 'GET', body = null) {
+            try {
+                const options = {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                };
+                
+                if (body) {
+                    options.body = JSON.stringify(body);
+                }
+                
+                const response = await fetch(`${CONFIG.API_URL}${endpoint}`, options);
+                
+                if (!response.ok) {
+                    throw new Error(`API请求失败: ${response.status}`);
+                }
+                
+                if (response.status === 204) {
+                    return null;
+                }
+                
+                return await response.json();
+            } catch (error) {
+                console.error(`API调用失败 (${endpoint}):`, error);
+                
+                // API调用失败时，尝试使用本地存储
+                return null;
+            }
+        }
+        
+        // 检测后端服务是否可用
+        async function detectBackendService() {
+            try {
+                // 发送一个简单的请求来测试后端服务是否可用
+                const response = await fetch(`${CONFIG.API_URL}/memos`, {
+                    method: 'GET',
+                    timeout: 3000, // 3秒超时
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                // 如果请求成功，则后端服务可用
+                if (response.ok) {
+                    console.log('后端服务检测成功，将使用后端API');
+                    return true;
+                } else {
+                    console.log('后端服务检测失败，状态码:', response.status);
+                    return false;
+                }
+            } catch (error) {
+                console.error('后端服务检测异常:', error);
+                return false;
+            }
+        }
+        
+        // 从后端API加载所有备忘录
+        async function loadMemosFromBackend() {
+            try {
+                const memosData = await fetchFromApi('/memos');
+                
+                if (memosData !== null) {
+                    memos = memosData;
+                    renderMemoList();
+                    // 同时保存到localStorage作为备份
+                    localStorage.setItem('memos', JSON.stringify(memos));
+                    console.log('备忘录数据已从后端API成功加载');
+                    return true;
+                } else {
+                    console.log('后端API加载失败，尝试使用本地存储');
+                    return false;
+                }
+            } catch (error) {
+                console.error('从后端API加载备忘录失败:', error);
+                return false;
+            }
+        }
+        
+        // 保存备忘录到后端API
+        async function saveMemoToBackend(memo) {
+            try {
+                // 我们的后端使用POST方法处理所有保存操作
+                const result = await fetchFromApi('/memos', 'POST', memo);
+                
+                if (result !== null) {
+                    // 更新本地数据
+                    if (memo.id) {
+                        const index = memos.findIndex(m => m.id === memo.id);
+                        if (index !== -1) {
+                            memos[index] = result;
+                        }
+                    } else {
+                        memos.push(result);
+                    }
+                    
+                    // 同时保存到localStorage作为备份
+                    localStorage.setItem('memos', JSON.stringify(memos));
+                    console.log('备忘录数据已成功保存到后端API');
+                    return result; // 返回后端返回的备忘录对象，而不是true
+                } else {
+                    console.log('后端API保存失败，尝试使用本地存储');
+                    return false;
+                }
+            } catch (error) {
+                console.error('保存备忘录到后端API失败:', error);
+                return false;
+            }
+        }
+        
+        // 从后端API删除备忘录
+        async function deleteMemoFromBackend(id) {
+            try {
+                // 对于DELETE请求，我们不检查result是否为null，而是根据是否抛出异常来判断
+                // 因为fetchFromApi函数在接收到204状态码时会返回null，但这是DELETE操作的标准成功响应
+                await fetchFromApi(`/memos/${id}`, 'DELETE');
+                
+                // 如果没有抛出异常，则表示API调用成功
+                // 更新本地数据
+                memos = memos.filter(m => m.id !== id);
+                
+                // 同时更新localStorage
+                localStorage.setItem('memos', JSON.stringify(memos));
+                console.log('备忘录已从后端API成功删除');
+                return true;
+            } catch (error) {
+                console.error('从后端API删除备忘录失败:', error);
+                return false;
+            }
+        }
+        
+        // 清空后端API上的所有备忘录
+        async function clearAllMemosFromBackend() {
+            try {
+                // 对于DELETE请求，即使API返回204(No Content)也是成功的
+                // 所以我们不检查result是否为null，而是根据是否抛出异常来判断
+                await fetchFromApi('/memos', 'DELETE');
+                
+                // 如果没有抛出异常，则表示API调用成功
+                // 更新本地数据
+                memos = [];
+                
+                // 同时更新localStorage
+                localStorage.setItem('memos', JSON.stringify(memos));
+                console.log('所有备忘录已从后端API成功清空');
+                return true;
+            } catch (error) {
+                console.error('清空后端API上的备忘录失败:', error);
+                return false;
+            }
+        }
+        
+        // 使用FileSystemAccess API检查并记住bwl文件夹（备用方案）
+        async function ensureAndRememberBwlFolder() {
+            if ('showDirectoryPicker' in window) {
+                try {
+                    // 请求权限以读取和写入文件
+                    const options = {
+                        mode: 'readwrite',
+                        startIn: 'documents'
+                    };
+                    
+                    const folderHandle = await window.showDirectoryPicker(options);
+                    console.log('文件夹已选择:', folderHandle.name);
+                    
+                    // 保存文件夹句柄到IndexedDB
+                    await saveFolderHandle(folderHandle);
+                    
+                    // 检查文件夹中是否有备忘录数据文件
+                    await checkAndLoadMemoData(folderHandle);
+                    
+                } catch (err) {
+                    console.error('选择文件夹失败:', err);
+                    // 如果出错，回退到传统的文件选择方式
+                    loadMemosFromFile();
+                }
+            } else {
+                console.log('浏览器不支持FileSystemAccess API');
+                loadMemosFromFile();
+            }
+        }
+        
+        // 保存文件夹句柄到IndexedDB
+        async function saveFolderHandle(folderHandle) {
+            try {
+                // 检查是否有权限存储句柄
+                if (!('indexedDB' in window)) {
+                    console.log('浏览器不支持IndexedDB');
+                    return;
+                }
+                
+                // 打开IndexedDB数据库
+                const db = await new Promise((resolve, reject) => {
+                    const request = indexedDB.open('MemoApp', 1);
+                    
+                    request.onupgradeneeded = (event) => {
+                        const db = event.target.result;
+                        // 创建存储对象
+                        db.createObjectStore('appData', { keyPath: 'id' });
+                    };
+                    
+                    request.onsuccess = (event) => resolve(event.target.result);
+                    request.onerror = (event) => reject(event.target.error);
+                });
+                
+                // 存储文件夹句柄
+                const tx = db.transaction('appData', 'readwrite');
+                const store = tx.objectStore('appData');
+                
+                // 使用结构化克隆算法存储句柄
+                await store.put({ id: 'bwlFolderHandle', handle: folderHandle });
+                
+                console.log('文件夹句柄已保存到IndexedDB');
+            } catch (err) {
+                console.error('保存文件夹句柄失败:', err);
+            }
+        }
+        
+        // 从IndexedDB加载文件夹句柄
+        async function loadFolderHandle() {
+            try {
+                if (!('indexedDB' in window)) {
+                    console.log('浏览器不支持IndexedDB');
+                    return null;
+                }
+                
+                const db = await new Promise((resolve, reject) => {
+                    const request = indexedDB.open('MemoApp', 2); // 更新版本号以触发升级
+                    
+                    // 添加数据库升级处理
+                    request.onupgradeneeded = (event) => {
+                        const db = event.target.result;
+                        // 如果appData对象存储不存在，则创建它
+                        if (!db.objectStoreNames.contains('appData')) {
+                            db.createObjectStore('appData');
+                            console.log('创建appData对象存储');
+                        }
+                    };
+                    
+                    request.onsuccess = (event) => resolve(event.target.result);
+                    request.onerror = (event) => reject(event.target.error);
+                });
+                
+                // 使用try-catch确保即使对象存储不存在也不会导致应用崩溃
+                try {
+                    const tx = db.transaction('appData', 'readonly');
+                    const store = tx.objectStore('appData');
+                    
+                    const result = await store.get('bwlFolderHandle');
+                    
+                    if (result && result.handle) {
+                        console.log('成功从IndexedDB加载文件夹句柄');
+                        return result.handle;
+                    } else {
+                        console.log('未找到保存的文件夹句柄');
+                        return null;
+                    }
+                } catch (innerErr) {
+                    console.warn('访问对象存储失败，可能是数据库结构问题:', innerErr);
+                    return null;
+                }
+            } catch (err) {
+                console.error('加载文件夹句柄失败:', err);
+                return null;
+            }
+        }
+        
+        // 检查文件夹中是否有备忘录数据文件并加载
+        async function checkAndLoadMemoData(folderHandle) {
+            try {
+                // 检查文件夹中是否有名为'备忘录数据.json'的文件
+                const fileNames = [];
+                for await (const entry of folderHandle.values()) {
+                    if (entry.kind === 'file') {
+                        fileNames.push(entry.name);
+                        
+                        // 如果找到备忘录数据文件，尝试加载
+                        if (entry.name === '备忘录数据.json') {
+                            console.log('找到备忘录数据文件');
+                            
+                            // 获取文件内容
+                            const file = await entry.getFile();
+                            const content = await file.text();
+                            
+                            // 解析并加载数据
+                            memos = JSON.parse(content);
+                            renderMemoList();
+                            
+                            // 同时保存到localStorage作为备份
+                            localStorage.setItem('memos', JSON.stringify(memos));
+                            
+                            console.log('备忘录数据已成功加载');
+                            return;
+                        }
+                    }
+                }
+                
+                console.log('未在文件夹中找到备忘录数据文件');
+                // 如果没有找到文件，从localStorage加载作为备份
+                loadMemosFromLocalStorage();
+            } catch (err) {
+                console.error('加载备忘录数据失败:', err);
+                // 出错时从localStorage加载
+                loadMemosFromLocalStorage();
+            }
+        }
+        
+        // 保存备忘录到本地文件
+        function saveMemosToFile() {
+            try {
+                const dataStr = JSON.stringify(memos, null, 2);
+                const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+                
+                const exportFileDefaultName = '备忘录数据.json';
+                
+                const linkElement = document.createElement('a');
+                linkElement.setAttribute('href', dataUri);
+                linkElement.setAttribute('download', exportFileDefaultName);
+                linkElement.click();
+                
+                // 提示用户将文件保存到bwl文件夹
+                setTimeout(() => {
+                    alert('请将文件保存到本地的bwl文件夹，下次打开网页时会自动读取。\n如果bwl文件夹不存在，请先创建。');
+                }, 100);
+            } catch (error) {
+                console.error('保存备忘录到文件失败:', error);
+                // 保存失败时回退到localStorage
+                localStorage.setItem('memos', JSON.stringify(memos));
+                alert('文件保存失败，已使用浏览器存储备份数据。\n您可以手动导出备忘录。');
+            }
+        }
+        
+        // 从本地文件加载备忘录（备用方法）
+        function loadMemosFromFile() {
+            try {
+                // 创建文件选择器
+                const fileInput = document.createElement('input');
+                fileInput.type = 'file';
+                fileInput.accept = '.json';
+                
+                // 隐藏文件选择器
+                fileInput.style.display = 'none';
+                document.body.appendChild(fileInput);
+                
+                // 自动触发文件选择
+                fileInput.click();
+                
+                // 监听文件选择事件
+                fileInput.onchange = function(event) {
+                    const file = event.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            try {
+                                memos = JSON.parse(e.target.result);
+                                renderMemoList();
+                                // 同时保存到localStorage作为备份
+                                localStorage.setItem('memos', JSON.stringify(memos));
+                            } catch (error) {
+                                console.error('解析备忘录文件失败:', error);
+                                alert('备忘录文件格式不正确！');
+                                // 尝试从localStorage加载
+                                loadMemosFromLocalStorage();
+                            }
+                        };
+                        reader.readAsText(file);
+                    } else {
+                        // 用户取消选择，尝试从localStorage加载
+                        loadMemosFromLocalStorage();
+                    }
+                    
+                    // 移除文件选择器
+                    document.body.removeChild(fileInput);
+                };
+            } catch (error) {
+                console.error('加载备忘录文件失败:', error);
+                // 加载失败时回退到localStorage
+                loadMemosFromLocalStorage();
+            }
+        }
+        
+        // 自动尝试从已保存的文件夹句柄加载数据
+        async function autoLoadFromRememberedFolder() {
+            try {
+                // 尝试加载之前保存的文件夹句柄
+                const folderHandle = await loadFolderHandle();
+                
+                if (folderHandle) {
+                    // 如果成功加载到文件夹句柄，检查并加载其中的数据
+                    await checkAndLoadMemoData(folderHandle);
+                } else {
+                    // 如果没有保存的句柄，使用传统的文件选择方式
+                    loadMemosFromFile();
+                }
+            } catch (err) {
+                console.error('自动加载失败:', err);
+                // 出错时回退到传统的文件选择方式
+                loadMemosFromFile();
+            }
+        }
+        
+        // 从localStorage加载备忘录（作为备份方案）
+        function loadMemosFromLocalStorage() {
+            try {
+                const savedMemos = localStorage.getItem('memos');
+                memos = savedMemos ? JSON.parse(savedMemos) : [];
+                renderMemoList();
+            } catch (error) {
+                console.error('加载备忘录失败:', error);
+                memos = [];
+                renderMemoList();
+            }
+        }
+        
+        // 重新定义保存和加载函数，根据配置选择后端API或本地存储
+        async function saveMemos() {
+            if (CONFIG.STORAGE_TYPE === 'backend') {
+                // 尝试使用后端API
+                const success = await Promise.all(
+                    memos.map(memo => saveMemoToBackend(memo))
+                ).then(results => results.every(result => result));
+                
+                if (success) {
+                    return;
+                }
+                
+                // 如果后端API失败，回退到本地存储
+                console.log('后端API批量保存失败，使用本地存储');
+            }
+            
+            // 使用本地存储
+            saveMemosToFile();
+            localStorage.setItem('memos', JSON.stringify(memos));
+        }
+        
+        // 提示用户创建bwl文件夹
+        function promptBwlFolder() {
+            if (confirm('首次使用本地文件存储功能，请创建或选择bwl文件夹以保存备忘录数据。\n\n注意：请确保您创建的文件夹命名为"bwl"，以便系统能够正确读取和保存数据。\n\n系统会记住您选择的文件夹，下次打开时自动加载备忘录。')) {
+                ensureAndRememberBwlFolder();
+            } else {
+                // 用户取消，从localStorage加载
+                loadMemosFromLocalStorage();
+            }
+        }
+        
+        // 渲染备忘录左侧列表
+        function renderMemoList() {
+            const sidebarList = document.getElementById('sidebar-list');
+            sidebarList.innerHTML = '';
+            
+            if (memos.length === 0) {
+                sidebarList.innerHTML = `
+                    <div class="no-memos">
+                        <p>📝 还没有备忘录，点击上方按钮创建一个吧！</p>
+                    </div>
+                `;
+                document.getElementById('memo-content').innerHTML = `
+                    <div class="no-selected-memo">
+                        <p>📋 请从左侧列表选择一个备忘录</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // 按创建时间降序排序
+            const sortedMemos = [...memos].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            
+            sortedMemos.forEach(memo => {
+                const sidebarItem = document.createElement('div');
+                sidebarItem.className = 'sidebar-memo-item';
+                sidebarItem.setAttribute('data-id', memo.id);
+                
+                // 截取预览内容，确保content有默认值
+                const previewContent = (memo.content || '').length > 50 ? (memo.content || '').substring(0, 50) + '...' : (memo.content || '');
+                
+                sidebarItem.innerHTML = `
+                    <h4 class="sidebar-memo-title">${memo.title || '无标题备忘录'}</h4>
+                    <p class="sidebar-memo-preview">${previewContent}</p>
+                    <span class="sidebar-memo-date">${new Date(memo.createdAt).toLocaleString('zh-CN')}</span>
+                `;
+                
+                // 点击备忘录项显示内容
+                sidebarItem.addEventListener('click', () => {
+                    selectMemo(memo.id);
+                });
+                
+                sidebarList.appendChild(sidebarItem);
+            });
+        }
+        
+        // 选择备忘录并显示内容
+        // 创建查看备忘录模态框元素
+        function createViewMemoModal() {
+            // 检查是否已经存在查看模态框
+            if (document.getElementById('view-memo-modal')) {
+                return;
+            }
+            
+            const viewModal = document.createElement('div');
+            viewModal.className = 'modal';
+            viewModal.id = 'view-memo-modal';
+            viewModal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 id="view-modal-title">查看备忘录</h3>
+                        <button class="close-button" id="close-view-modal">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="view-memo-content" class="view-memo-content"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button id="view-edit-btn">✏️ 编辑</button>
+                        <button id="view-delete-btn">🗑️ 删除</button>
+                        <button id="view-close-btn">关闭</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(viewModal);
+            
+            // 添加查看模态框的样式
+            const style = document.createElement('style');
+            style.textContent = `
+                .view-memo-content {
+                    min-height: 300px;
+                    line-height: 1.6;
+                    white-space: pre-wrap;
+                    word-wrap: break-word;
+                }
+                
+                .view-memo-content h2 {
+                    margin-top: 0;
+                    color: #333;
+                }
+                
+                .view-memo-date {
+                    color: #666;
+                    margin: 10px 0;
+                    font-size: 14px;
+                }
+            `;
+            document.head.appendChild(style);
+            
+            // 添加事件监听器
+            if (document.getElementById('close-view-modal')) {
+                document.getElementById('close-view-modal').addEventListener('click', closeViewMemoModal);
+            }
+            if (document.getElementById('view-close-btn')) {
+                document.getElementById('view-close-btn').addEventListener('click', closeViewMemoModal);
+            }
+            if (document.getElementById('view-edit-btn')) {
+                document.getElementById('view-edit-btn').addEventListener('click', () => {
+                    const memoId = document.getElementById('view-memo-modal')?.getAttribute('data-memo-id');
+                    if (memoId) {
+                        closeViewMemoModal();
+                        editMemo(memoId);
+                    }
+                });
+            }
+            if (document.getElementById('view-delete-btn')) {
+                document.getElementById('view-delete-btn').addEventListener('click', () => {
+                    const memoId = document.getElementById('view-memo-modal')?.getAttribute('data-memo-id');
+                    if (memoId) {
+                        closeViewMemoModal();
+                        deleteMemo(memoId);
+                    }
+                });
+            }
+            
+            // 点击模态框背景关闭
+            viewModal.addEventListener('click', (e) => {
+                if (e.target === viewModal) {
+                    closeViewMemoModal();
+                }
+            });
+        }
+        
+        // 打开查看备忘录模态框
+        function openViewMemoModal(memo) {
+            // 确保模态框已创建
+            createViewMemoModal();
+            
+            const viewModal = document.getElementById('view-memo-modal');
+            const viewModalTitle = document.getElementById('view-modal-title');
+            const viewMemoContent = document.getElementById('view-memo-content');
+            
+            if (viewModal && viewModalTitle && viewMemoContent) {
+                // 设置备忘录ID
+                viewModal.setAttribute('data-memo-id', memo.id);
+                
+                // 设置内容
+                viewModalTitle.textContent = memo.title || '无标题备忘录';
+                
+                // 安全地格式化日期
+                let formattedDate = '未知日期';
+                try {
+                    const date = new Date(memo.createdAt);
+                    if (!isNaN(date.getTime())) {
+                        formattedDate = formatDate(date);
+                    }
+                } catch (error) {
+                    console.error('格式化日期失败:', error);
+                }
+                
+                // 确保内容有默认值，避免显示undefined
+                const content = memo.content || '';
+                
+                viewMemoContent.innerHTML = `
+                    <h2>${memo.title || '无标题备忘录'}</h2>
+                    <div class="view-memo-date">创建于: ${formattedDate}</div>
+                    <div>${content}</div>
+                `;
+                
+                // 显示模态框
+                viewModal.classList.remove('active'); // 先移除，再加回，确保动画重新触发
+                void viewModal.offsetWidth; // 触发重排
+                viewModal.classList.add('active');
+                viewModal.style.display = 'flex';
+                viewModal.style.opacity = '1';
+                viewModal.style.visibility = 'visible';
+                viewModal.style.pointerEvents = 'auto';
+                viewModal.style.zIndex = '1000'; // 确保在最上层
+                viewModal.style.position = 'fixed'; // 固定定位，确保位置正确
+                viewModal.style.top = '0';
+                viewModal.style.left = '0';
+                viewModal.style.width = '100%';
+                viewModal.style.height = '100%';
+            }
+        }
+        
+        // 关闭查看备忘录模态框
+        function closeViewMemoModal() {
+            const viewModal = document.getElementById('view-memo-modal');
+            if (viewModal) {
+                viewModal.classList.remove('active');
+                viewModal.style.display = 'none';
+                viewModal.style.opacity = '0';
+                viewModal.style.visibility = 'hidden';
+                viewModal.style.pointerEvents = 'none';
+                viewModal.style.zIndex = '-1';
+            }
+        }
+        
+        function selectMemo(id) {
+            console.log('selectMemo被调用，ID:', id);
+            
+            // 移除所有选中状态
+            document.querySelectorAll('.sidebar-memo-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // 添加选中状态
+            const selectedItem = document.querySelector(`.sidebar-memo-item[data-id="${id}"]`);
+            if (selectedItem) {
+                selectedItem.classList.add('active');
+            }
+            
+            // 查找备忘录并打开查看模态框
+            const memo = memos.find(m => m.id === id);
+            if (memo) {
+                console.log('找到备忘录:', memo);
+                openViewMemoModal(memo);
+            } else {
+                console.warn('未找到ID为', id, '的备忘录');
+                // 如果未找到备忘录，显示提示信息而不是打开空模态框
+                const memoContent = document.getElementById('memo-content');
+                if (memoContent) {
+                    memoContent.innerHTML = `
+                        <div class="no-selected-memo">
+                            <p>📋 找不到指定的备忘录</p>
+                        </div>
+                    `;
+                }
+            }
+        }
+        
+        // 打开新建备忘录模态框
+        function openNewMemoModal() {
+            console.log('openNewMemoModal函数被调用');
+            
+            // 重新获取元素，确保它们存在
+            const modalTitle = document.getElementById('modal-title');
+            const memoTitleInput = document.getElementById('memo-title-input');
+            const memoContentInput = document.getElementById('memo-content-input');
+            const memoDateDisplay = document.getElementById('memo-date-display');
+            const memoModal = document.getElementById('memo-modal');
+            
+            if (!modalTitle || !memoTitleInput || !memoContentInput || !memoDateDisplay || !memoModal) {
+                console.error('模态框相关元素未找到:', {
+                    modalTitle: !!modalTitle,
+                    memoTitleInput: !!memoTitleInput,
+                    memoContentInput: !!memoContentInput,
+                    memoDateDisplay: !!memoDateDisplay,
+                    memoModal: !!memoModal
+                });
+                return;
+            }
+            
+            console.log('所有模态框相关元素都已找到');
+            modalTitle.textContent = '新建备忘录';
+            memoTitleInput.value = '';
+            memoContentInput.value = '';
+            const now = new Date();
+            memoDateDisplay.textContent = `创建于: ${formatDate(now)}`;
+            editingMemoId = null;
+            
+            console.log('尝试显示模态框 - 重置所有样式');
+            // 完全重置模态框的样式，确保正确显示和定位
+            memoModal.classList.remove('active'); // 先移除，再加回，确保动画重新触发
+            void memoModal.offsetWidth; // 触发重排
+            memoModal.classList.add('active');
+            
+            // 重置所有可能影响显示的样式
+            memoModal.style.display = 'flex';
+            memoModal.style.opacity = '1';
+            memoModal.style.visibility = 'visible';
+            memoModal.style.pointerEvents = 'auto';
+            memoModal.style.zIndex = '1000'; // 确保在最上层
+            memoModal.style.position = 'fixed'; // 固定定位，确保位置正确
+            memoModal.style.top = '0';
+            memoModal.style.left = '0';
+            memoModal.style.width = '100%';
+            memoModal.style.height = '100%';
+            
+            memoTitleInput.focus();
+            
+            console.log('模态框显示操作完成');
+        }
+        
+        // 编辑备忘录
+        function editMemo(id) {
+            const memo = memos.find(m => m.id === id);
+            if (!memo) return;
+            
+            modalTitle.textContent = '编辑备忘录';
+            memoTitleInput.value = memo.title || '';
+            memoContentInput.value = memo.content || '';
+            memoDateDisplay.textContent = `创建于: ${formatDate(new Date(memo.createdAt))}`;
+            editingMemoId = id;
+            memoModal.classList.add('active');
+            memoTitleInput.focus();
+        }
+        
+        // 保存备忘录
+        async function saveMemo() {
+            // 安全地获取输入值，确保有默认值
+            const title = (memoTitleInput && memoTitleInput.value) ? memoTitleInput.value.trim() : '';
+            const content = (memoContentInput && memoContentInput.value) ? memoContentInput.value.trim() : '';
+            
+            if (!content) {
+                alert('备忘录内容不能为空！');
+                return;
+            }
+            
+            const now = new Date();
+            let savedMemo = null;
+            
+            try {
+                if (editingMemoId) {
+                    // 编辑现有备忘录
+                    const memoToUpdate = {
+                        id: editingMemoId,
+                        title,
+                        content,
+                        updatedAt: now.toISOString()
+                    };
+                    
+                    if (CONFIG.STORAGE_TYPE === 'backend') {
+                        // 尝试使用后端API
+                        const result = await saveMemoToBackend(memoToUpdate);
+                        if (result) {
+                            savedMemo = result;
+                            // 同步更新本地memos数组
+                            const index = memos.findIndex(m => m.id === editingMemoId);
+                            if (index !== -1) {
+                                memos[index] = savedMemo;
+                            }
+                            // 使用后端存储时，只更新localStorage，不触发文件下载
+                            localStorage.setItem('memos', JSON.stringify(memos));
+                        }
+                    }
+                    
+                    if (!savedMemo) {
+                        // 如果后端API失败或使用本地存储，更新本地数据
+                        const index = memos.findIndex(m => m.id === editingMemoId);
+                        if (index !== -1) {
+                            memos[index] = {
+                                ...memos[index],
+                                title,
+                                content,
+                                updatedAt: now.toISOString()
+                            };
+                            savedMemo = memos[index];
+                        }
+                        saveMemosToFile();
+                        localStorage.setItem('memos', JSON.stringify(memos));
+                    }
+                } else {
+                    // 创建新备忘录
+                    const newMemo = {
+                        id: `memo-${Date.now()}`, // 提前生成ID，确保ID始终存在
+                        title,
+                        content,
+                        createdAt: now.toISOString(),
+                        updatedAt: now.toISOString()
+                    };
+                    
+                    if (CONFIG.STORAGE_TYPE === 'backend') {
+                        // 尝试使用后端API
+                        const result = await saveMemoToBackend(newMemo);
+                        if (result) {
+                            savedMemo = result;
+                            memos.push(savedMemo);
+                            // 使用后端存储时，只更新localStorage，不触发文件下载
+                            localStorage.setItem('memos', JSON.stringify(memos));
+                        }
+                    }
+                    
+                    if (!savedMemo) {
+                        // 如果后端API失败或使用本地存储，使用已准备好的newMemo对象
+                        savedMemo = newMemo;
+                        memos.push(savedMemo);
+                        saveMemosToFile();
+                        localStorage.setItem('memos', JSON.stringify(memos));
+                    }
+                }
+            } catch (error) {
+                console.error('保存备忘录时出错:', error);
+                alert('保存备忘录失败，请重试！');
+            } finally {
+                // 无论保存是否成功，都关闭模态框
+                renderMemoList();
+                
+                // 使用增强版的closeMemoModal函数，确保模态框可靠关闭
+                setTimeout(() => {
+                    closeMemoModal();
+                }, 0);
+                
+                // 不再自动选中新创建的备忘录，避免弹出查看窗口
+                // if (savedMemo && !editingMemoId) {
+                //     setTimeout(() => {
+                //         selectMemo(savedMemo.id);
+                //     }, 100);
+                // }
+            }
+        }
+        
+        // 删除备忘录
+        async function deleteMemo(id) {
+            if (confirm('确定要删除这个备忘录吗？')) {
+                let success = false;
+                
+                if (CONFIG.STORAGE_TYPE === 'backend') {
+                    // 尝试使用后端API
+                    success = await deleteMemoFromBackend(id);
+                }
+                
+                if (!success) {
+                    // 如果后端API失败或使用本地存储，更新本地数据
+                    memos = memos.filter(m => m.id !== id);
+                    saveMemosToFile();
+                    localStorage.setItem('memos', JSON.stringify(memos));
+                }
+                
+                renderMemoList();
+                
+                // 确保删除后模态框也被关闭
+                closeMemoModal();
+                
+                // 清空或更新右侧内容区域
+                const memoContent = document.getElementById('memo-content');
+                // 无论是否还有备忘录，都显示提示信息，让用户手动选择要查看的备忘录
+                memoContent.innerHTML = `
+                    <div class="no-selected-memo">
+                        <p>📋 请从左侧列表选择一个备忘录</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // 清空所有备忘录
+        async function clearAllMemos() {
+            if (memos.length === 0) {
+                alert('没有可清空的备忘录！');
+                return;
+            }
+            
+            if (confirm('确定要清空所有备忘录吗？此操作不可恢复！')) {
+                let success = false;
+                
+                if (CONFIG.STORAGE_TYPE === 'backend') {
+                    // 尝试使用后端API
+                    success = await clearAllMemosFromBackend();
+                }
+                
+                if (!success) {
+                    // 如果后端API失败或使用本地存储，更新本地数据
+                    memos = [];
+                    saveMemosToFile();
+                    localStorage.setItem('memos', JSON.stringify(memos));
+                }
+                
+                renderMemoList();
+            }
+        }
+        
+        // 关闭备忘录模态框 - 增强版
+        function closeMemoModal() {
+            try {
+                // 直接获取并操作DOM元素
+                const directModal = document.getElementById('memo-modal') || memoModal || window.memoModal;
+                if (directModal) {
+                    // 强制移除active类
+                    directModal.classList.remove('active');
+                    // 添加多重CSS样式覆盖确保隐藏
+                    directModal.style.display = 'none';
+                    directModal.style.opacity = '0';
+                    directModal.style.visibility = 'hidden';
+                    directModal.style.pointerEvents = 'none';
+                    directModal.style.zIndex = '-1';
+                }
+                
+                // 重置所有相关状态变量
+                editingMemoId = null;
+                if (window) window.editingMemoId = null;
+                if (document) document.editingMemoId = null;
+                
+            } catch (error) {
+                console.error('关闭模态框时出错:', error);
+                // 最后的后备方案：直接操作document对象
+                try {
+                    const fallbackElement = document.getElementById('memo-modal');
+                    if (fallbackElement) {
+                        fallbackElement.classList.remove('active');
+                        fallbackElement.style.display = 'none';
+                        fallbackElement.style.opacity = '0';
+                        fallbackElement.style.visibility = 'hidden';
+                        fallbackElement.style.pointerEvents = 'none';
+                        fallbackElement.style.zIndex = '-1';
+                    }
+                    editingMemoId = null;
+                } catch (finalError) {
+                    console.error('所有关闭模态框的尝试都失败了:', finalError);
+                }
+            }
+        }
+        
+        // 添加事件监听 - 确保在DOM完全加载后绑定
+        document.addEventListener('DOMContentLoaded', () => {
+            // 创建查看备忘录模态框
+            createViewMemoModal();
+            
+            // 重新获取元素，确保DOM已经完全加载
+            const newMemoButton = document.getElementById('new-memo-button');
+            const clearAllButton = document.getElementById('clear-all-button');
+            const memoModal = document.getElementById('memo-modal');
+            const closeModalButton = document.getElementById('close-modal');
+            const cancelMemoButton = document.getElementById('cancel-memo-button');
+            const saveMemoButton = document.getElementById('save-memo-button');
+            
+            // 绑定事件监听器
+            if (newMemoButton) {
+                console.log('找到了newMemoButton元素，准备绑定点击事件');
+                newMemoButton.addEventListener('click', function(event) {
+                    console.log('新建备忘录按钮被点击！事件对象:', event);
+                    openNewMemoModal();
+                });
+                console.log('点击事件已成功绑定到newMemoButton');
+            } else {
+                console.error('newMemoButton元素未找到！');
+            }
+            
+            if (clearAllButton) {
+                clearAllButton.addEventListener('click', async () => {
+                    await clearAllMemos();
+                });
+            }
+            
+            if (closeModalButton) {
+                closeModalButton.addEventListener('click', closeMemoModal);
+            }
+            
+            if (cancelMemoButton) {
+                cancelMemoButton.addEventListener('click', closeMemoModal);
+            }
+            
+            if (saveMemoButton) {
+                saveMemoButton.addEventListener('click', async () => {
+                    await saveMemo();
+                });
+            }
+            
+            // 加载数据按钮事件监听
+            const loadMemoButton = document.getElementById('load-memo-button');
+            if (loadMemoButton) {
+                loadMemoButton.addEventListener('click', async function() {
+                    // 根据配置选择加载方式
+                    if (CONFIG.STORAGE_TYPE === 'backend') {
+                        // 尝试从后端API加载
+                        const backendSuccess = await loadMemosFromBackend();
+                        if (backendSuccess) {
+                            return;
+                        }
+                        
+                        // 后端API加载失败，提示用户选择加载方式
+                        if (confirm('后端API加载失败，是否使用本地文件加载？')) {
+                            ensureAndRememberBwlFolder();
+                        }
+                    } else {
+                        // 使用本地文件加载
+                        ensureAndRememberBwlFolder();
+                    }
+                });
+            }
+            
+            // 导出数据按钮事件监听
+            const exportMemoButton = document.getElementById('export-memo-button');
+            if (exportMemoButton) {
+                exportMemoButton.addEventListener('click', function() {
+                    saveMemosToFile();
+                });
+            }
+            
+            // 点击模态框外部关闭模态框
+            if (memoModal) {
+                memoModal.addEventListener('click', (e) => {
+                    if (e.target === memoModal) {
+                        closeMemoModal();
+                    }
+                });
+            }
+            
+            // 按ESC键关闭模态框
+            document.addEventListener('keydown', (e) => {
+                const modal = document.getElementById('memo-modal');
+                if (e.key === 'Escape' && modal && modal.classList.contains('active')) {
+                    closeMemoModal();
+                }
+            });
+        });
+        
+        // 页面加载时加载备忘录
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadMemos();
+        });
+        
+        // 添加一个全局函数，允许通过控制台手动打开新建备忘录模态框
+        window.testOpenNewMemoModal = function() {
+            console.log('通过全局函数testOpenNewMemoModal手动调用openNewMemoModal');
+            const modal = document.getElementById('memo-modal');
+            if (modal) {
+                console.log('手动显示模态框');
+                modal.classList.add('active');
+                modal.style.display = 'block';
+                
+                // 聚焦到标题输入框
+                const titleInput = document.getElementById('memo-title-input');
+                if (titleInput) {
+                    titleInput.focus();
+                }
+            } else {
+                console.error('模态框元素未找到！');
+            }
+        };
+        
+        // 更新加载备忘录后调用的函数
+        async function loadMemos() {
+            // 自动检测后端服务是否可用
+            const isBackendAvailable = await detectBackendService();
+            
+            // 根据检测结果选择加载方式
+            if (isBackendAvailable) {
+                // 后端服务可用，使用后端API
+                const backendSuccess = await loadMemosFromBackend();
+                if (backendSuccess) {
+                    return;
+                }
+                
+                console.log('后端API加载失败，尝试使用本地存储');
+            } else {
+                // 后端服务不可用，直接使用本地存储
+                console.log('后端服务不可用，将使用本地文件服务');
+                
+                // 显示通知给用户
+                try {
+                    if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+                        new Notification('备忘录服务通知', {
+                            body: '后端服务未启动，已自动切换到本地文件服务',
+                            icon: 'images/author.png'
+                        });
+                    } else {
+                        // 简单提示
+                        console.log('提示：后端服务未启动，已自动切换到本地文件服务');
+                    }
+                } catch (err) {
+                    console.error('显示通知失败:', err);
+                }
+            }
+            
+            // 使用本地存储
+            const hasPrompted = localStorage.getItem('hasPromptedBwlFolder');
+            if (!hasPrompted) {
+                promptBwlFolder();
+                localStorage.setItem('hasPromptedBwlFolder', 'true');
+            } else {
+                // 非首次加载，尝试自动从已记住的文件夹加载
+                await autoLoadFromRememberedFolder();
+            }
+        }
+    </script>
+</body>
+</html>
