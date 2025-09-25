@@ -1,11 +1,10 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
+<html lang="zh-CN"><head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>文件夹结构可视化工具</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* 全局样式样式重置 CSS 保持不变 */
         * {
             box-sizing: border-box;
             margin: 0;
@@ -16,28 +15,319 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             line-height: 1.6;
             color: #333;
-            /* background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); */
-            background: url('images/文件夹结构可视化工具background.jpg') center center/cover no-repeat;
             min-height: 100vh;
-            padding: 20px;
+            padding: 10px;
+            overflow-x: hidden;
+            background-color: #1a1a1a;
+            transition: background-color 0.5s ease;
+            display: flex;
+            flex-direction: column;
         }
         
-        .container {/*主体区域*/
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* 确保页面能够占满视口高度 */
+        #app-root {
+            min-height: 100vh;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* 背景容器样式 */
+        #background-image {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            z-index: -1;
+            transition: background-image 1.5s ease-in-out, opacity 1s ease;
+            filter: brightness(0.8) contrast(1.1);
+        }
+        
+        /* 背景渐变遮罩 */
+        #background-image::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.2) 100%);
+            pointer-events: none;
+        }
+        
+        /* 淡入动画 */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* 呼吸动画 */
+        @keyframes breathe {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+        
+        /* 脉冲动画 */
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(26, 115, 232, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(26, 115, 232, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(26, 115, 232, 0);
+            }
+        }
+        
+        /* 滑动进入动画 */
+        @keyframes slideIn {
+            from {
+                transform: translateX(-30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        /* 悬停缩放动画 */
+        @keyframes hoverScale {
+            from {
+                transform: scale(1);
+            }
+            to {
+                transform: scale(1.03);
+            }
+        }
+        
+        /* 骨架屏加载动画 */
+        @keyframes skeletonLoading {
+            0% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0 50%;
+            }
+        }
+        
+        .container {
             max-width: 1400px;
-            margin: 0 auto;
-            background: rgba(255, 255, 255, 0.25);
-            border-radius: 12px;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+            width: 80%;
+            margin: 10vh auto;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18), 0 1px 8px rgba(0, 0, 0, 0.08);
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            height: 90vh;
+            min-height: 0;
+            height: 80vh;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, #3498db, #8e44ad, #e74c3c, #f39c12);
+            border-radius: 16px 16px 0 0;
+            z-index: 2;
         }
         
         header {
-            padding: 25px 30px;
-            background: rgba(255, 255, 255, 0.25);
+            padding: 18px 20px;
+            background: rgba(255, 255, 255, 0.08);
             color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+            transition: padding 0.3s ease;
+        }
+        
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0) 100%);
+            pointer-events: none;
+        }
+        
+        .header-right {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 8px;
+        }
+        
+        .header-right .path-display {
+            margin: 0;
+            background-color: rgba(225, 245, 254, 0.8);
+            transition: all 0.3s ease;
+        }
+        
+        .header-right .path-display:hover {
+            background-color: rgba(225, 245, 254, 0.9);
+            transform: translateY(-1px);
+        }
+        
+        .header-right .stats {
+            margin: 0;
+            display: flex;
+            gap: 8px;
+        }
+        
+        .header-right .stat-item {
+            background: rgba(243, 247, 253, 0.8);
+            white-space: nowrap;
+            transition: all 0.3s ease;
+        }
+        
+        .header-right .stat-item:hover {
+            background: rgba(243, 247, 253, 0.9);
+            transform: translateY(-1px);
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 8px;
+            }
+            
+            .container {
+                min-height: calc(100vh - 16px);
+            }
+            
+            header {
+                padding: 15px 15px;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .description {
+                font-size: 1rem;
+            }
+            
+            .header-right {
+                align-items: flex-start;
+                width: 100%;
+            }
+            
+            .header-right .stats {
+                flex-wrap: wrap;
+            }
+            
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .panel {
+                width: 100%;
+                padding: 15px;
+                border-right: none !important;
+                border-left: none !important;
+            }
+            
+            .left-panel {
+                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            }
+        }
+        
+        @media (max-width: 480px) {
+            body {
+                padding: 5px;
+            }
+            
+            .container {
+                min-height: calc(100vh - 10px);
+                border-radius: 12px;
+            }
+            
+            header {
+                padding: 12px 12px;
+                gap: 10px;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+                gap: 8px;
+            }
+            
+            .description {
+                font-size: 0.9rem;
+            }
+            
+            .panel {
+                padding: 12px;
+            }
+            
+            .select-button {
+                padding: 10px 16px;
+                font-size: 14px;
+            }
+            
+            .tree-container {
+                padding: 12px;
+            }
+            
+            .file-info {
+                padding: 12px;
+                font-size: 0.85em;
+            }
+        }
+        
+        @media (max-width: 360px) {
+            h1 {
+                font-size: 1.3rem;
+            }
+            
+            .folder-input {
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            .select-button {
+                width: 100%;
+            }
         }
         
         h1 {
@@ -45,33 +335,154 @@
             margin-bottom: 8px;
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 10px;
+            font-weight: 700;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            transition: font-size 0.3s ease;
+        }
+        
+        h1 i {
+            animation: breathe 3s ease-in-out infinite;
         }
         
         .description {
             font-size: 1.1rem;
             opacity: 0.9;
+            font-weight: 400;
+            letter-spacing: 0.5px;
+            transition: font-size 0.3s ease;
         }
         
         .main-content {
             display: flex;
             flex: 1;
             overflow: hidden;
+            position: relative;
         }
         
-        .sidebar {
-            width: 35%;
+        .main-content::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            width: 1px;
+            height: 100%;
+            background: linear-gradient(to bottom, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0) 100%);
+            z-index: 1;
+        }
+        
+        .panel {
+            width: 50%;
             padding: 20px;
-            /*border-right: 1px solid #e0e0e0;*/
             display: flex;
             flex-direction: column;
-            background: rgba(255, 255, 255, 0.25); /* 与其他区域一致的透明度 */
+            background: rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            min-height: 0;
+        }
+        
+        .panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 100%;
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0) 5%, rgba(255, 255, 255, 0) 95%, rgba(255, 255, 255, 0.02) 100%);
+            pointer-events: none;
+        }
+        
+        .left-panel {
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .right-panel {
+            border-left: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* 横向居中 */
+            justify-content: center; /* 纵向居中 */
+        }
+        
+        /* 保持三个div的宽度，避免被拉伸 */
+        .right-panel #path-display,
+        .right-panel .stats,
+        .right-panel .file-info {
+            width: 100%;
+            max-width: 600px; /* 限制最大宽度，保持美观 */
         }
         
         .folder-input {
             display: flex;
             gap: 12px;
             margin-bottom: 20px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        /* 共用上传和显示窗口容器 */
+        .upload-tree-container {
+            position: relative;
+            min-height: 400px;
+            width: 100%;
+            max-height: calc(100vh - 150px); /* 根据视口高度动态计算最大高度 */
+            overflow: hidden; /* 隐藏溢出内容 */
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+        
+        /* 拖拽上传区域样式 */
+        .drag-drop-area {
+            border: 1px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.03);
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            min-height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .drag-drop-area:hover {
+            border-color: rgba(52, 152, 219, 0.6);
+            background: rgba(52, 152, 219, 0.05);
+            transform: translateY(-1px);
+        }
+        
+        .drag-drop-area.dragover {
+            border-color: rgba(52, 152, 219, 0.8);
+            background: rgba(52, 152, 219, 0.1);
+            box-shadow: 0 0 20px rgba(52, 152, 219, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .drag-drop-content i {
+            color: rgba(52, 152, 219, 0.8);
+            margin-bottom: 15px;
+            animation: breathe 3s ease-in-out infinite;
+        }
+        
+        .drag-drop-content p {
+            color: rgba(255, 255, 255, 0.8);
+            margin: 5px 0;
+            font-size: 16px;
+            font-weight: 500;
+        }
+        
+        .drag-drop-hint {
+            color: rgba(255, 255, 255, 0.5) !important;
+            font-size: 14px !important;
+            font-weight: 400 !important;
         }
         
         #folder-selector {
@@ -79,60 +490,149 @@
         }
         
         .select-button {
-            background: rgba(255, 255, 255, 0.25);
+            background: linear-gradient(135deg, rgba(52, 152, 219, 0.8), rgba(41, 128, 185, 0.8));
             color: rgb(255, 255, 255);
             padding: 12px 20px;
             border: none;
             border-radius: 50px;
             cursor: pointer;
             font-size: 16px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+            font-weight: 700;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2);
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 8px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+            position: relative;
+            overflow: hidden;
+            z-index: 2;
+        }
+        
+        .select-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+            z-index: 1;
         }
         
         .select-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4), 0 2px 6px rgba(0, 0, 0, 0.25);
+        }
+        
+        .select-button:hover::before {
+            left: 100%;
+        }
+        
+        .select-button:active {
+            transform: translateY(0) scale(0.98);
+            box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2);
         }
         
         .tree-container {
-            flex: 1;
-            /*border: 1px solid #e0e0e0;*/
-            border-radius: 8px;
+            width: 100%;
+            height: 100%;
+            border-radius: 12px;
             overflow-y: auto;
-            background: rgba(255, 255, 255, 0.25);
+            background: rgba(255, 255, 255, 0.05);
             padding: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            position: relative;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+            flex: 1;
+        }
+        
+        .tree-container:hover {
+            background: rgba(255, 255, 255, 0.07);
+        }
+        
+        /* 自定义滚动条 */
+        .tree-container::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        .tree-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+        
+        .tree-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            transition: background 0.3s ease;
+        }
+        
+        .tree-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .tree-container::-webkit-scrollbar-corner {
+            background: transparent;
         }
         
         .path-display {
             margin: 15px 0;
             padding: 12px 15px;
-            background-color: #e1f5fe;
-            border-radius: 6px;
+            background-color: rgba(225, 245, 254, 0.7);
+            border-radius: 8px;
             font-family: monospace;
             word-break: break-all;
             border-left: 4px solid #029be5;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .path-display:hover {
+            background-color: rgba(225, 245, 254, 0.8);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
         
         .stats {
             display: flex;
-            gap: 15px;
+            gap: 12px;
             margin: 15px 0;
             flex-wrap: wrap;
+            justify-content: center; /* 横向居中排列内部元素 */
         }
         
         .stat-item {
-            background: #f3f7fd;
+            background: rgba(243, 247, 253, 0.7);
             padding: 10px 15px;
             border-radius: 8px;
             font-size: 0.9em;
             display: flex;
             align-items: center;
             gap: 5px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 3px;
+            height: 100%;
+            background: #3498db;
+        }
+        
+        .stat-item:hover {
+            background: rgba(243, 247, 253, 0.8);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
         
         .stat-item span {
@@ -140,26 +640,16 @@
             color: #2980b9;
         }
         
-        .preview-container {
-            flex: 1;
-            background: rgba(255, 255, 255, 0.25);
-            padding: 25px;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-        
-        .preview-header {
+        .panel-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
             padding-bottom: 15px;
-            /*border-bottom: 1px solid #eee;*/
             background: rgba(255, 255, 255, 0.05);
         }
         
-        .preview-title {
+        .panel-title {
             font-size: 1.5rem;
             color: #ffffff;
             display: flex;
@@ -167,61 +657,83 @@
             gap: 10px;
         }
         
-        .preview-content {
+        .panel-content {
             flex: 1;
             overflow: auto;
-            /*border: 1px solid #e0e0e0;*/
             border-radius: 8px;
             padding: 20px;
-            background: #f9f9f9;
+            background: rgba(255, 255, 255, 0.1);
             display: flex;
             align-items: center;
             justify-content: center;
-            background: rgba(255, 255, 255, 0.25);
         }
         
-        .preview-placeholder {
+        .panel-placeholder {
             text-align: center;
-            color: #95a5a6;
+            color: #e0e0e0;
         }
         
-        .preview-placeholder i {
+        .panel-placeholder i {
             font-size: 3rem;
             margin-bottom: 15px;
             color: #3498db;
         }
         
-        .preview-image {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-        }
-        
-        .preview-text {
-            white-space: pre-wrap;
-            font-family: monospace;
-            line-height: 1.6;
-            width: 100%;
-            overflow: auto;
-        }
-        
         .file-info {
-            margin-top: 15px;
-            padding: 15px;
-            background: #f3f7fd;
-            border-radius: 8px;
-            font-size: 0.9em;
+            padding: 18px;
+            background: rgba(243, 247, 253, 0.9);
+            border-radius: 12px;
+            font-size: 0.95em;
+            margin-top: 5px; /* 进一步减小顶部间距 */
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .file-info:hover {
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+            transform: translateY(-1px);
         }
         
         .file-info div {
-            margin-bottom: 8px;
+            margin-bottom: 12px;
             display: flex;
+            align-items: center;
+        }
+        
+        .file-info div:last-child {
+            margin-bottom: 0;
         }
         
         .file-info .label {
-            font-weight: bold;
+            font-weight: 600;
             min-width: 100px;
             color: #2c3e50;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .file-info span:last-child {
+            color: #34495e;
+            font-family: 'Courier New', Courier, monospace;
+            background: rgba(255, 255, 255, 0.5);
+            padding: 2px 8px;
+            border-radius: 4px;
+            flex: 1;
+            min-height: 22px;
+            display: flex;
+            align-items: center;
+        }
+        
+        /* 响应式调整 */
+        @media (max-width: 600px) {
+            .file-info {
+                padding: 12px;
+                font-size: 0.85em;
+            }
+            
+            .file-info .label {
+                min-width: 80px;
+            }
         }
         
         /* 树形结构样式 */
@@ -270,34 +782,66 @@
             display: flex;
             align-items: center;
             cursor: pointer;
-            padding: 8px 10px;
-            border-radius: 4px;
-            transition: all 0.2s;
+            padding: 8px 12px;
+            border-radius: 6px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             margin: 2px 0;
+            color: #f0f0f0;
+            position: relative;
+            overflow: hidden;
         }
         
         .tree .folder:hover, .tree .file:hover {
-            background-color: #e3f2fd;
+            background-color: rgba(227, 242, 253, 0.5);
+            transform: translateX(3px);
+            box-shadow: 0 2px 8px rgba(52, 152, 219, 0.15);
+        }
+        
+        .tree .folder:active, .tree .file:active {
+            transform: translateX(1px);
+        }
+        
+        .tree .folder::before, .tree .file::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 2px;
+            height: 100%;
+            background: rgba(52, 152, 219, 0);
+            transition: background 0.3s ease;
+        }
+        
+        .tree .folder:hover::before, .tree .file:hover::before {
+            background: rgba(52, 152, 219, 0.8);
         }
         
         .tree .folder i {
             margin-right: 8px;
             color: #ffc107;
+            transition: transform 0.3s ease;
         }
         
         .tree .file i {
             margin-right: 8px;
             color: #3498db;
+            transition: transform 0.3s ease;
+        }
+        
+        .tree .folder:hover i,
+        .tree .file:hover i {
+            transform: scale(1.15) rotate(5deg);
         }
         
         .tree .empty {
-            color: #95a5a6;
+            color: #bdc3c7;
             font-style: italic;
         }
         
         .tree ul {
             margin-left: 24px;
             display: none;
+            animation: fadeIn 0.3s ease-out;
         }
         
         .tree .open > ul {
@@ -310,22 +854,47 @@
         
         .loading {
             text-align: center;
-            padding: 30px;
-            color: #7f8c8d;
+            padding: 40px 20px;
+            color: #bdc3c7;
             font-size: 1.1em;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 12px;
+            border: 1px dashed rgba(52, 152, 219, 0.3);
+            position: relative;
+            overflow: hidden;
         }
         
         .loading::after {
             content: "";
             display: inline-block;
-            width: 20px;
-            height: 20px;
+            width: 24px;
+            height: 24px;
             border: 3px solid rgba(52, 152, 219, 0.3);
             border-radius: 50%;
             border-top-color: #3498db;
-            animation: spin 1s ease-in-out infinite;
+            animation: spin 1s linear infinite;
             margin-left: 10px;
             vertical-align: middle;
+        }
+        
+        .loading::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(52, 152, 219, 0.1), transparent);
+            animation: loadingSlide 2s infinite;
+        }
+        
+        @keyframes loadingSlide {
+            0% {
+                left: -100%;
+            }
+            100% {
+                left: 100%;
+            }
         }
         
         @keyframes spin {
@@ -334,18 +903,40 @@
         
         .no-content {
             text-align: center;
-            padding: 30px;
-            color: #95a5a6;
+            padding: 40px 20px;
+            color: #bdc3c7;
             font-style: italic;
             font-size: 1.1em;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 12px;
+            border: 1px dashed rgba(255, 255, 255, 0.1);
         }
         
         footer {
-            padding: 20px;
+            padding: 15px 20px;
             text-align: center;
-            color: #7f8c8d;
+            color: #bdc3c7;
             font-size: 0.9em;
-            /*border-top: 1px solid #eee;*/
+            background: rgba(0, 0, 0, 0.1);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+        }
+        
+        .unsupported-file {
+            padding: 30px;
+            text-align: center;
+            color: #bdc3c7;
         }
         
         /* 响应式设计 */
@@ -354,41 +945,692 @@
                 flex-direction: column;
             }
             
-            .sidebar {
+            .panel {
                 width: 100%;
                 border-right: none;
-                border-bottom: 1px solid #e0e0e0;
-                background: rgba(255, 255, 255, 0.35);
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             }
             
-            .preview-container {
-                width: 100%;
+            .right-panel {
+                border-left: none;
             }
         }
         
-        .unsupported-file {
-            padding: 30px;
+        /* 设置按钮样式 - 无色透明模糊效果 */
+        #settings-button {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.08));
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1000;
+            animation: float 3s ease-in-out infinite;
+            overflow: hidden;
+        }
+        
+        #settings-button::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0) 70%);
+            transform: scale(0);
+            transition: transform 0.6s ease-out;
+            pointer-events: none;
+        }
+        
+        #settings-button:hover {
+            transform: scale(1.15);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15), 0 3px 6px rgba(0, 0, 0, 0.2);
+        }
+        
+        #settings-button:hover::before {
+            transform: scale(1);
+        }
+        
+        #settings-button:active {
+            transform: scale(0.95);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-5px);
+            }
+        }
+        
+        /* 设置面板样式 */
+        #settings-panel {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 350px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.9));
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            z-index: 1001;
+            transform: translateY(120%) scale(0.95);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            max-height: 90vh;
+            overflow-y: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        
+        #settings-panel.show {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+        }
+        
+        /* 关闭按钮样式 */
+        .close-button {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: rgba(220, 53, 69, 0.1);
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            font-size: 16px;
+            cursor: pointer;
+            color: #dc3545;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .close-button:hover {
+            background: rgba(220, 53, 69, 0.2);
+            color: #c82333;
+            transform: scale(1.1);
+        }
+        
+        .close-button:active {
+            transform: scale(0.9);
+        }
+        
+        /* 设置面板选项卡样式 */
+        .panel-tabs-container {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        
+        .panel-tab-button {
+            padding: 10px 20px;
+            background: transparent;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .panel-tab-button:hover {
+            color: #333;
+        }
+        
+        .panel-tab-button.active {
+            color: #1a73e8;
+            border-bottom: 3px solid #1a73e8;
+        }
+        
+        /* 选项卡指示器 */
+        .tab-indicator {
+            position: absolute;
+            bottom: -1px;
+            height: 3px;
+            background: #1a73e8;
+            border-radius: 3px 3px 0 0;
+            transition: left 0.3s ease, width 0.3s ease;
+        }
+        
+        /* 设置面板内容区域 */
+        .panel-tab-content-container {
+            min-height: 300px;
+        }
+        
+        .panel-tab-content {
+            display: none;
+        }
+        
+        .panel-tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        /* 滑块样式 */
+        .opacity-control {
+            margin-bottom: 25px;
+            position: relative;
+        }
+        
+        .opacity-control label {
+            display: block;
+            margin-bottom: 12px;
+            font-size: 18px;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        .opacity-control input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: linear-gradient(to right, rgba(26, 115, 232, 0.2), rgba(26, 115, 232, 0.05));
+            outline: none;
+            -webkit-appearance: none;
+            border: 1px solid rgba(26, 115, 232, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .opacity-control input[type="range"]:hover {
+            background: linear-gradient(to right, rgba(26, 115, 232, 0.3), rgba(26, 115, 232, 0.1));
+        }
+        
+        .opacity-control input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1a73e8, #0d47a1);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25), 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid white;
+        }
+        
+        .opacity-control input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 0 2px 5px rgba(0, 0, 0, 0.15);
+        }
+        
+        .opacity-control input[type="range"]::-webkit-slider-thumb:active {
+            transform: scale(0.95);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .opacity-control input[type="range"]::-moz-range-thumb {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #1a73e8;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            transition: all 0.2s ease;
+        }
+        
+        .opacity-control input[type="range"]::-moz-range-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .opacity-value {
+            font-size: 16px;
+            color: #333;
+            font-weight: bold;
+        }
+        
+        /* 上传按钮样式 */
+        .upload-container {
+            position: relative;
+            width: 100%;
+            height: 120px;
+            border: 2px dashed rgba(26, 115, 232, 0.3);
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.8));
+            margin-bottom: 20px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+        
+        .upload-container:hover {
+            border-color: #1a73e8;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.9));
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .upload-container::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent 49%, rgba(26, 115, 232, 0.1) 50%, transparent 51%);
+            background-size: 10px 10px;
+            animation: moveGrid 20s linear infinite;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .upload-container:hover::after {
+            opacity: 1;
+        }
+        
+        @keyframes moveGrid {
+            0% {
+                background-position: 0 0;
+            }
+            100% {
+                background-position: 100px 100px;
+            }
+        }
+        
+        .upload-icon {
+            font-size: 32px;
+            color: #1a73e8;
+            margin-bottom: 10px;
+            transition: transform 0.3s ease;
+        }
+        
+        .upload-container:hover .upload-icon {
+            transform: scale(1.1) rotate(5deg);
+        }
+        
+        .upload-text {
+            color: #666;
+            font-size: 0.9rem;
+            font-weight: 500;
             text-align: center;
-            color: #95a5a6;
+            transition: color 0.3s ease;
+        }
+        
+        .upload-container:hover .upload-text {
+            color: #333;
+        }
+        
+        .upload-text span {
+            color: #1a73e8;
+            font-weight: 600;
+        }
+        
+        #image-upload {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+        
+        /* 预设背景图片样式 - 分页样式 */
+        .preset-backgrounds {
+            margin-top: 15px;
+            background-color: transparent;
+            border-radius: 12px;
+            padding: 10px;
+            position: relative;
+            background: rgba(255, 255, 255, 0.5);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        
+        .preset-backgrounds h4 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1rem;
+            text-align: center;
+            border-radius: 4px;
+            font-weight: 600;
+            position: relative;
+            display: inline-block;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 0 10px;
+        }
+        
+        .preset-backgrounds h4::after {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            left: 10%;
+            width: 80%;
+            height: 2px;
+            background: linear-gradient(to right, transparent, rgba(26, 115, 232, 0.5), transparent);
+            transition: all 0.3s ease;
+        }
+        
+        .preset-backgrounds:hover h4::after {
+            width: 100%;
+            left: 0;
+            background: linear-gradient(to right, transparent, rgba(26, 115, 232, 0.8), transparent);
+        }
+        
+        /* 分页容器 - 文字版分页样式 */
+        .pagination-container {
+            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        
+        /* 页码按钮样式 - 修改为蓝色按钮 */
+        .page-nav {
+            padding: 8px 14px;
+            background: linear-gradient(135deg, #1a73e8, #0d5bbc);
+            border: 1px solid #0d5bbc;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 6px rgba(26, 115, 232, 0.3);
+        }
+        
+        .page-nav::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0) 70%);
+            transform: scale(0);
+            transition: transform 0.6s ease-out;
+            pointer-events: none;
+        }
+        
+        .page-nav:hover:not(:disabled) {
+            background: linear-gradient(135deg, #0d5bbc, #0a4a91);
+            border-color: #0a4a91;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(26, 115, 232, 0.4);
+        }
+        
+        .page-nav:hover::before {
+            transform: scale(1);
+        }
+        
+        .page-nav:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: linear-gradient(135deg, #ccc, #aaa);
+            border-color: #aaa;
+            color: #666;
+            box-shadow: none;
+        }
+        
+        .page-nav:active:not(:disabled) {
+            transform: translateY(0);
+            box-shadow: 0 2px 6px rgba(26, 115, 232, 0.3);
+        }
+        
+        /* 页码显示 - 当前页/总页数样式 */
+        .page-info {
+            color: #333;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 0 15px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 6px;
+            padding: 8px 12px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        /* 预设图片网格 - 2x3布局 */
+        .preset-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 10px;
+            position: relative;
+            perspective: 1000px;
+        }
+        
+        .preset-page {
+            display: none;
+        }
+        
+        .preset-page.active {
+            display: block;
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        .preset-image {
+            width: 100%;
+            height: 60px;
+            border-radius: 10px;
+            cursor: pointer;
+            object-fit: cover;
+            border: 3px solid transparent;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transform-style: preserve-3d;
+        }
+        
+        .preset-image::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, transparent 50%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+        
+        .preset-image:hover {
+            border-color: #1a73e8;
+            transform: scale(1.08) translateY(-3px) rotate(1deg);
+            box-shadow: 0 8px 16px rgba(26, 115, 232, 0.3);
+        }
+        
+        .preset-image:hover::before {
+            opacity: 1;
+        }
+        
+        .preset-image.selected {
+            border-color: #1a73e8;
+            box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.3);
+            transform: scale(1.03);
+        }
+        
+        .preset-image.selected::after {
+            content: '✓';
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            background: linear-gradient(135deg, #1a73e8, #0d5bbc);
+            color: white;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            animation: pulse 2s ease-in-out infinite;
+            box-shadow: 0 2px 6px rgba(26, 115, 232, 0.4);
+            border: 1px solid white;
+        }
+        
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.1);
+                opacity: 0.9;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+        
+        #settings-panel h3 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.2rem;
+        }
+        
+        /* 预设透明度按钮样式 */
+        .preset-opacity-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .preset-opacity-button {
+            flex: 1;
+            min-width: 80px;
+            padding: 10px 15px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.8));
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 500;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+        
+        .preset-opacity-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(26, 115, 232, 0.15), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        .preset-opacity-button:hover {
+            background: linear-gradient(135deg, #e9f5fe, #d7ebfd);
+            border-color: #1a73e8;
+            color: #1a73e8;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .preset-opacity-button:hover::before {
+            left: 100%;
+        }
+        
+        .preset-opacity-button.active {
+            background: linear-gradient(135deg, #1a73e8, #0d5bbc);
+            border-color: #0d5bbc;
+            color: white;
+            box-shadow: 0 3px 8px rgba(26, 115, 232, 0.3);
+        }
+        
+        .preset-opacity-button:active:not(.active) {
+            transform: translateY(0);
         }
     </style>
 </head>
 <body>
-    <div class="container">
+    <!-- 背景图片容器 -->
+    <div id="background-image"></div>
+    
+    <!-- 应用根容器 -->
+    <div id="app-root">
+        <div class="container">
         <header>
-            <h1><i class="fas fa-folder-tree"></i> 文件夹结构可视化工具</h1>
-            <p class="description">选择本地文件夹，浏览其结构并预览文件内容</p>
+            <div>
+                <h1><i class="fas fa-folder-tree"></i> 文件夹结构可视化工具</h1>
+                <p class="description">选择本地文件夹，双窗格浏览其结构</p>
+            </div>
+            <div class="header-right">
+                <!-- 路径和统计信息已移至右侧面板 -->
+            </div>
         </header>
         
         <div class="main-content">
-            <div class="sidebar">
+            <!-- 左侧面板 - 文件夹结构 -->
+            <div class="panel left-panel">
                 <div class="folder-input">
-                    <input type="file" id="folder-selector" webkitdirectory directory multiple>
+                    <input type="file" id="folder-selector" webkitdirectory="" directory="" multiple="">
                     <button class="select-button" id="select-folder">
                         <i class="fas fa-folder-open"></i> 选择文件夹
                     </button>
                 </div>
                 
+                <!-- 共用上传和显示窗口 -->
+                <div id="upload-tree-container" class="upload-tree-container">
+                    <!-- 拖拽上传区域 -->
+                    <div id="drag-drop-area" class="drag-drop-area">
+                        <div class="drag-drop-content">
+                            <i class="fas fa-folder-open fa-4x"></i>
+                            <p>拖拽文件夹到此处上传</p>
+                            <p class="drag-drop-hint">或者</p>
+                            <p class="drag-drop-hint">点击上方按钮选择文件夹</p>
+                        </div>
+                    </div>
+                    
+                    <!-- 文件夹结构区域 -->
+                    <div class="tree-container" style="display: none;">
+                        <div id="loading-left" class="loading" style="display: none;">正在读取文件夹结构</div>
+                        <div id="no-content-left" class="no-content">请选择一个文件夹</div>
+                        <div id="tree-content-left" style="display: none;">
+                            <ul class="tree" id="file-tree-left"></ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 右侧面板 - 文件夹结构和信息 -->
+            <div class="panel right-panel">
+                
+
+                <!-- 路径和统计信息 -->
                 <div id="path-display" class="path-display" style="display: none;">
                     <i class="fas fa-folder"></i> 当前路径: <span id="current-path"></span>
                 </div>
@@ -402,27 +1644,6 @@
                     </div>
                     <div class="stat-item">
                         <i class="fas fa-list"></i> 总计: <span id="total-count">0</span>
-                    </div>
-                </div>
-                
-                <div class="tree-container">
-                    <div id="loading" class="loading" style="display: none;">正在读取文件夹结构</div>
-                    <div id="no-content" class="no-content">请选择一个文件夹</div>
-                    <div id="tree-content" style="display: none;">
-                        <ul class="tree" id="file-tree"></ul>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="preview-container">
-                <div class="preview-header">
-                    <h2 class="preview-title"><i class="fas fa-file-alt"></i> 文件预览</h2>
-                </div>
-                
-                <div class="preview-content" id="preview-content">
-                    <div class="preview-placeholder">
-                        <i class="fas fa-file-image"></i>
-                        <p>选择文件进行预览<br>支持 JPG, PNG, TXT, MD 等格式</p>
                     </div>
                 </div>
                 
@@ -448,33 +1669,152 @@
         </div>
         
         <footer>
-            <p>提示: 点击文件夹图标可以展开或折叠内容 | 点击文件可以预览内容</p>
+            <p>提示: 点击文件夹图标可以展开或折叠内容 | 双窗格可独立操作</p>
             <p>基于HTML5 File API实现 | 仅在现代浏览器中可用</p>
         </footer>
+    </div>
+    
+    <!-- 设置按钮 -->
+    <button id="settings-button">⚙️</button>
+    
+    <!-- 悬浮设置面板 -->
+    <div id="settings-panel">
+        <button class="close-button" id="close-panel">×</button>
+        <h3>背景与窗口设置</h3>
+        
+        <!-- 设置面板选项卡 -->
+        <div class="panel-tabs-container">
+            <button class="panel-tab-button active" data-panel-tab="window">窗口设置</button>
+            <button class="panel-tab-button" data-panel-tab="background">背景设置</button>
+        </div>
+        
+        <!-- 设置面板内容区域 -->
+        <div class="panel-tab-content-container">
+            <!-- 窗口透明虚化设置选项卡内容 -->
+            <div class="panel-tab-content active" id="window-tab">
+                <h4 style="margin-bottom: 20px;">窗口透明虚化设置</h4>
+                
+                <!-- 背景透明度控制 -->
+                <div class="opacity-control">
+                    <label for="background-opacity">背景透明度</label>
+                    <input type="range" id="background-opacity" min="5" max="30" value="15">
+                    <div class="opacity-value" id="background-opacity-value">当前值: 15%</div>
+                </div>
+                
+                <!-- 模糊强度控制 -->
+                <div class="opacity-control">
+                    <label for="blur-intensity">模糊强度</label>
+                    <input type="range" id="blur-intensity" min="0" max="20" value="12">
+                    <div class="opacity-value" id="blur-intensity-value">当前值: 12px</div>
+                </div>
+                
+                <!-- 预设透明度按钮 -->
+                <h4 style="margin: 20px 0 10px;">快速预设</h4>
+                <div class="preset-opacity-buttons">
+                    <button class="preset-opacity-button" data-background="5" data-blur="8">清晰</button>
+                    <button class="preset-opacity-button" data-background="15" data-blur="12">标准</button>
+                    <button class="preset-opacity-button" data-background="25" data-blur="18">模糊</button>
+                </div>
+            </div>
+            
+            <!-- 背景图片设置选项卡内容 - 分页显示 -->
+            <div class="panel-tab-content" id="background-tab">
+                <h4 style="margin-bottom: 20px;">背景图片设置</h4>
+                
+                <!-- 随机背景按钮 -->
+                <button id="random-background-button" class="select-button" style="width: 100%; margin-bottom: 20px;">
+                    🔄 随机更换背景
+                </button>
+                
+                <!-- 图片上传区域 -->
+                <div class="upload-container">
+                    <div class="upload-icon">📷</div>
+                    <div class="upload-text">点击上传背景图片</div>
+                    <input type="file" id="image-upload" accept="image/*">
+                </div>
+                
+                <!-- 预设背景图片 - 分页显示 -->
+                <div class="preset-backgrounds">
+                    <h4>预设背景</h4>
+                    
+                    <!-- 第一页 - 6个图片 -->
+                    <div class="preset-page active" data-page="1">
+                        <div class="preset-grid">
+                            <img class="preset-image" src="images/background/bg (1).jpg" alt="预设背景1" data-url="images/background/bg (1).jpg">
+                            <img class="preset-image" src="images/background/bg (2).jpg" alt="预设背景2" data-url="images/background/bg (2).jpg">
+                            <img class="preset-image" src="images/background/bg (3).jpg" alt="预设背景3" data-url="images/background/bg (3).jpg">
+                            <img class="preset-image" src="images/background/bg (4).jpg" alt="预设背景4" data-url="images/background/bg (4).jpg">
+                            <img class="preset-image" src="images/background/bg (1).png" alt="预设背景5" data-url="images/background/bg (1).png">
+                            <img class="preset-image" src="images/background/bg (2).png" alt="预设背景6" data-url="images/background/bg (2).png">
+                        </div>
+                    </div>
+                    
+                    <!-- 第二页 - 3个图片 -->
+                    <div class="preset-page" data-page="2">
+                        <div class="preset-grid">
+                            <img class="preset-image" src="images/background/bg (3).png" alt="预设背景7" data-url="images/background/bg (3).png">
+                            <img class="preset-image" src="images/background/bg (4).png" alt="预设背景8" data-url="images/background/bg (4).png">
+                            <img class="preset-image" src="images/background/bg (6).png" alt="预设背景9" data-url="images/background/bg (6).png">
+                            <!-- 空白占位 -->
+                            <div></div>
+                            <div></div>
+                            <div></div>
+                        </div>
+                    </div>
+                    
+                    <!-- 分页控制器 - 文字版上一页下一页，中间显示当前页/总页数 -->
+                    <div class="pagination-container">
+                        <button class="page-nav" id="prev-page" disabled="">上一页</button>
+                        <span class="page-info" id="page-info">1/2</span>
+                        <button class="page-nav" id="next-page">下一页</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // 文件夹可视化相关元素
             const folderSelector = document.getElementById('folder-selector');
             const selectButton = document.getElementById('select-folder');
-            const loadingElement = document.getElementById('loading');
-            const noContentElement = document.getElementById('no-content');
-            const treeContentElement = document.getElementById('tree-content');
-            const fileTreeElement = document.getElementById('file-tree');
+            const loadingLeftElement = document.getElementById('loading-left');
+            const noContentLeftElement = document.getElementById('no-content-left');
+            const treeContentLeftElement = document.getElementById('tree-content-left');
+            const fileTreeLeftElement = document.getElementById('file-tree-left');
             const pathDisplay = document.getElementById('path-display');
             const currentPathElement = document.getElementById('current-path');
             const statsElement = document.getElementById('stats');
             const foldersCountElement = document.getElementById('folders-count');
             const filesCountElement = document.getElementById('files-count');
             const totalCountElement = document.getElementById('total-count');
-            const previewContentElement = document.getElementById('preview-content');
             const fileInfoElement = document.getElementById('file-info');
             const fileNameElement = document.getElementById('file-name');
             const fileTypeElement = document.getElementById('file-type');
             const fileSizeElement = document.getElementById('file-size');
             const fileModifiedElement = document.getElementById('file-modified');
             
+            // 背景和窗口设置相关元素
+            const settingsButton = document.getElementById('settings-button');
+            const settingsPanel = document.getElementById('settings-panel');
+            const closePanelButton = document.getElementById('close-panel');
+            const backgroundImage = document.getElementById('background-image');
+            const randomBackgroundButton = document.getElementById('random-background-button');
+            const imageUpload = document.getElementById('image-upload');
+            const presetImages = document.querySelectorAll('.preset-image');
+            const container = document.querySelector('.container');
+            
+            // 分页相关元素 - 文字版分页
+            const presetPages = document.querySelectorAll('.preset-page');
+            const prevPageButton = document.getElementById('prev-page');
+            const nextPageButton = document.getElementById('next-page');
+            const pageInfoElement = document.getElementById('page-info');
+            const totalPages = presetPages.length;
+            let currentPage = 1;
+            
             let fileMap = new Map(); // 存储文件路径对应的File对象
+            let allPresetImages = Array.from(presetImages); // 所有预设背景图片
+            let fileTreeData = null; // 存储文件树数据，供两个面板使用
             
             // 点击按钮触发文件夹选择
             selectButton.addEventListener('click', function() {
@@ -484,23 +1824,68 @@
             // 处理文件夹选择
             folderSelector.addEventListener('change', function(event) {
                 const files = event.target.files;
+                processFolderFiles(files);
+            });
+            
+            // 获取拖拽上传区域元素
+            const dragDropArea = document.getElementById('drag-drop-area');
+            
+            // 添加拖拽事件监听器
+            dragDropArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.classList.add('dragover');
+            });
+            
+            dragDropArea.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.classList.remove('dragover');
+            });
+            
+            dragDropArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.classList.remove('dragover');
+                
+                // 检查是否有文件被拖拽
+                if (e.dataTransfer.files && e.dataTransfer.files.length) {
+                    const files = Array.from(e.dataTransfer.files);
+                    
+                    // 检查是否包含文件夹（通过webkitRelativePath）
+                    const hasFolders = files.some(file => file.webkitRelativePath.includes('/'));
+                    
+                    if (hasFolders) {
+                        processFolderFiles(files);
+                    } else {
+                        // 如果没有文件夹，尝试作为单个文件夹处理
+                        processSingleFilesAsFolder(files);
+                    }
+                }
+            });
+            
+            // 点击拖拽区域也触发文件夹选择
+            dragDropArea.addEventListener('click', function() {
+                folderSelector.click();
+            });
+            
+            // 处理文件夹文件
+            function processFolderFiles(files) {
                 if (!files.length) return;
                 
+                // 隐藏上传区域，显示文件夹结构区域
+                const dragDropArea = document.getElementById('drag-drop-area');
+                const treeContainer = document.querySelector('.tree-container');
+                dragDropArea.style.display = 'none';
+                treeContainer.style.display = 'block';
+                
                 // 显示加载状态
-                loadingElement.style.display = 'block';
-                noContentElement.style.display = 'none';
-                treeContentElement.style.display = 'none';
+                loadingLeftElement.style.display = 'block';
+                noContentLeftElement.style.display = 'none';
+                treeContentLeftElement.style.display = 'none';
                 pathDisplay.style.display = 'none';
                 statsElement.style.display = 'none';
                 fileInfoElement.style.display = 'none';
-                
-                // 重置预览区域
-                previewContentElement.innerHTML = `
-                    <div class="preview-placeholder">
-                        <i class="fas fa-file-image"></i>
-                        <p>选择文件进行预览<br>支持 JPG, PNG, TXT, MD 等格式</p>
-                    </div>
-                `;
                 
                 // 获取文件夹路径（从第一个文件的路径中提取）
                 const firstFilePath = files[0].webkitRelativePath;
@@ -513,24 +1898,79 @@
                 // 延迟处理以便显示加载状态
                 setTimeout(() => {
                     // 构建文件树结构
-                    const fileTree = buildFileTree(files);
+                    fileTreeData = buildFileTree(files);
                     
-                    // 渲染文件树
-                    renderFileTree(fileTree, fileTreeElement);
+                    // 渲染左侧文件树
+                    renderFileTree(fileTreeData, fileTreeLeftElement);
+                    
+                    // 右侧面板已移除，不再渲染文件树
                     
                     // 计算统计信息
-                    const counts = countItems(fileTree);
+                    const counts = countItems(fileTreeData);
                     foldersCountElement.textContent = counts.folders;
                     filesCountElement.textContent = counts.files;
                     totalCountElement.textContent = counts.folders + counts.files;
                     
                     // 显示结果
-                    loadingElement.style.display = 'none';
-                    treeContentElement.style.display = 'block';
+                    loadingLeftElement.style.display = 'none';
+                    treeContentLeftElement.style.display = 'block';
                     pathDisplay.style.display = 'block';
                     statsElement.style.display = 'flex';
                 }, 500);
-            });
+            }
+            
+            // 处理单个文件作为文件夹（为了兼容不支持拖拽文件夹的情况）
+            function processSingleFilesAsFolder(files) {
+                // 隐藏上传区域，显示文件夹结构区域
+                const dragDropArea = document.getElementById('drag-drop-area');
+                const treeContainer = document.querySelector('.tree-container');
+                dragDropArea.style.display = 'none';
+                treeContainer.style.display = 'block';
+                
+                // 显示加载状态
+                loadingLeftElement.style.display = 'block';
+                noContentLeftElement.style.display = 'none';
+                treeContentLeftElement.style.display = 'none';
+                pathDisplay.style.display = 'none';
+                statsElement.style.display = 'none';
+                fileInfoElement.style.display = 'none';
+                
+                // 设置虚拟文件夹路径
+                const folderPath = '上传的文件';
+                currentPathElement.textContent = folderPath;
+                
+                // 清空文件映射
+                fileMap.clear();
+                
+                // 延迟处理以便显示加载状态
+                setTimeout(() => {
+                    // 构建虚拟文件树结构
+                    const virtualRoot = {};
+                    files.forEach(file => {
+                        // 为每个文件设置虚拟路径
+                        const virtualFilePath = folderPath + '/' + file.name;
+                        fileMap.set(virtualFilePath, file);
+                        virtualRoot[file.name] = file;
+                    });
+                    
+                    fileTreeData = { [folderPath]: virtualRoot };
+                    
+                    // 渲染左侧文件树
+                    renderFileTree(fileTreeData, fileTreeLeftElement);
+                    
+                    // 计算统计信息
+                    const counts = countItems(fileTreeData);
+                    foldersCountElement.textContent = counts.folders;
+                    filesCountElement.textContent = counts.files;
+                    totalCountElement.textContent = counts.folders + counts.files;
+                    
+                    // 显示结果
+                    loadingLeftElement.style.display = 'none';
+                    treeContentLeftElement.style.display = 'block';
+                    pathDisplay.style.display = 'block';
+                    statsElement.style.display = 'flex';
+                }, 500);
+            };
             
             // 构建文件树结构
             function buildFileTree(files) {
@@ -564,8 +2004,8 @@
                 return root;
             }
             
-            // 渲染文件树
-            function renderFileTree(tree, container) {
+            // 渲染文件树到指定容器
+            function renderFileTree(tree, container, isRightPanel = false) {
                 container.innerHTML = '';
                 
                 if (Object.keys(tree).length === 0) {
@@ -589,7 +2029,7 @@
                             folderSpan.innerHTML = `<i class="fas fa-folder"></i> ${key}`;
                             
                             const nestedList = document.createElement('ul');
-                            renderFileTree(item, nestedList);
+                            renderFileTree(item, nestedList, isRightPanel);
                             
                             // 添加点击事件以展开/折叠文件夹
                             folderSpan.addEventListener('click', function(e) {
@@ -632,21 +2072,17 @@
                                 iconClass = 'fa-file-audio';
                             } else if (['mp4', 'avi', 'mov', 'wmv'].includes(fileExtension)) {
                                 iconClass = 'fa-file-video';
-                            } else if (['js'].includes(fileExtension)) {
-                                iconClass = 'fa-file-code';
-                            } else if (['html', 'htm'].includes(fileExtension)) {
-                                iconClass = 'fa-file-code';
-                            } else if (['css'].includes(fileExtension)) {
+                            } else if (['js', 'html', 'htm', 'css'].includes(fileExtension)) {
                                 iconClass = 'fa-file-code';
                             }
                             
                             fileSpan.innerHTML = `<i class="fas ${iconClass}"></i> ${key}`;
                             fileSpan.title = `大小: ${formatFileSize(item.size)}`;
                             
-                            // 添加文件点击事件
+                            // 添加文件点击事件 - 显示文件信息
                             fileSpan.addEventListener('click', function(e) {
                                 e.stopPropagation();
-                                previewFile(item);
+                                showFileInfo(item);
                             });
                             
                             listItem.appendChild(fileSpan);
@@ -657,44 +2093,26 @@
                 }
             }
             
-            // 预览文件
-            function previewFile(file) {
+            // 渲染右侧面板的文件树 - 该函数已不再使用，右侧面板已移除
+            function renderRightPanelTree(tree) {
+                // 函数保留但为空实现
+                return;
+            }
+            
+            // 显示文件信息
+            function showFileInfo(file) {
                 // 显示文件信息
                 fileNameElement.textContent = file.name;
-                fileTypeElement.textContent = file.type || '未知类型';
+                
+                // 获取文件扩展名
+                const fileExtension = file.name.split('.').pop().toLowerCase();
+                fileTypeElement.textContent = file.type || fileExtension.toUpperCase() + ' 文件';
+                
                 fileSizeElement.textContent = formatFileSize(file.size);
                 fileModifiedElement.textContent = new Date(file.lastModified).toLocaleString();
+                
+                // 显示文件信息面板
                 fileInfoElement.style.display = 'block';
-                
-                const fileExtension = file.name.split('.').pop().toLowerCase();
-                
-                // 根据文件类型进行预览
-                if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(fileExtension)) {
-                    // 图片预览
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        previewContentElement.innerHTML = `<img src="${e.target.result}" class="preview-image" alt="${file.name}">`;
-                    };
-                    reader.readAsDataURL(file);
-                } 
-                else if (['txt', 'md', 'json', 'xml', 'html', 'css', 'js', 'log'].includes(fileExtension)) {
-                    // 文本文件预览
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        previewContentElement.innerHTML = `<pre class="preview-text">${e.target.result}</pre>`;
-                    };
-                    reader.readAsText(file);
-                }
-                else {
-                    // 不支持预览的文件类型
-                    previewContentElement.innerHTML = `
-                        <div class="unsupported-file">
-                            <i class="fas fa-file fa-3x"></i>
-                            <p>不支持预览此文件类型</p>
-                            <p>文件类型: ${file.type || '未知'}</p>
-                        </div>
-                    `;
-                }
             }
             
             // 格式化文件大小
@@ -727,7 +2145,237 @@
                 
                 return { folders, files };
             }
+            
+            // 背景和窗口设置相关功能
+            // 为上传容器添加点击事件，确保点击时触发文件选择
+            const uploadContainer = document.querySelector('.upload-container');
+            uploadContainer.addEventListener('click', function() {
+                document.getElementById('image-upload').click();
+            });
+            
+            // 页面加载时设置随机背景图片
+            setRandomBackground();
+            
+            // 点击面板外部关闭面板
+            document.addEventListener('click', function(event) {
+                if (!settingsButton.contains(event.target) && 
+                    !settingsPanel.contains(event.target) && 
+                    settingsPanel.classList.contains('show')) {
+                    closeSettingsPanel();
+                }
+            });
+            
+            // 设置面板选项卡切换功能
+            const panelTabButtons = document.querySelectorAll('.panel-tab-button');
+            const panelTabContents = document.querySelectorAll('.panel-tab-content');
+            
+            // 面板选项卡切换函数
+            function switchPanelTab(tabName) {
+                // 移除所有选项卡按钮的激活状态
+                panelTabButtons.forEach(button => {
+                    button.classList.remove('active');
+                });
+                
+                // 隐藏所有选项卡内容
+                panelTabContents.forEach(content => {
+                    content.classList.remove('active');
+                });
+                
+                // 添加当前选项卡按钮的激活状态
+                const activeButton = document.querySelector(`[data-panel-tab="${tabName}"]`);
+                activeButton.classList.add('active');
+                
+                // 显示当前选项卡内容
+                const activeContent = document.getElementById(`${tabName}-tab`);
+                activeContent.classList.add('active');
+            }
+            
+            // 为每个设置面板选项卡按钮添加点击事件
+            panelTabButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const tabName = this.getAttribute('data-panel-tab');
+                    switchPanelTab(tabName);
+                });
+            });
+            
+            // 窗口透明度设置功能
+            const backgroundOpacitySlider = document.getElementById('background-opacity');
+            const blurIntensitySlider = document.getElementById('blur-intensity');
+            const backgroundOpacityValue = document.getElementById('background-opacity-value');
+            const blurIntensityValue = document.getElementById('blur-intensity-value');
+            const presetOpacityButtons = document.querySelectorAll('.preset-opacity-button');
+            
+            // 更新背景透明度
+            function updateBackgroundOpacity(value) {
+                const opacity = value / 100;
+                container.style.backgroundColor = `rgba(255, 255, 255, ${opacity})`;
+                backgroundOpacityValue.textContent = `当前值: ${value}%`;
+            }
+            
+            // 更新模糊程度
+            function updateBlurIntensity(value) {
+                container.style.backdropFilter = `blur(${value}px)`;
+                container.style.webkitBackdropFilter = `blur(${value}px)`;
+                blurIntensityValue.textContent = `当前值: ${value}px`;
+            }
+            
+            // 初始化设置
+            updateBackgroundOpacity(backgroundOpacitySlider.value);
+            updateBlurIntensity(blurIntensitySlider.value);
+            
+            // 为滑块添加事件监听
+            backgroundOpacitySlider.addEventListener('input', function() {
+                updateBackgroundOpacity(this.value);
+            });
+            
+            blurIntensitySlider.addEventListener('input', function() {
+                updateBlurIntensity(this.value);
+            });
+            
+            // 为预设按钮添加点击事件
+            presetOpacityButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const backgroundOpacity = this.getAttribute('data-background');
+                    const blurIntensity = this.getAttribute('data-blur');
+                    
+                    backgroundOpacitySlider.value = backgroundOpacity;
+                    blurIntensitySlider.value = blurIntensity;
+                    
+                    updateBackgroundOpacity(backgroundOpacity);
+                    updateBlurIntensity(blurIntensity);
+                });
+            });
+            
+            // 切换设置面板显示/隐藏
+            function toggleSettingsPanel() {
+                settingsPanel.classList.toggle('show');
+            }
+
+            // 关闭设置面板
+            function closeSettingsPanel() {
+                settingsPanel.classList.remove('show');
+            }
+
+            // 设置背景图片
+            function setBackgroundImage(imageUrl) {
+                backgroundImage.style.backgroundImage = `url('${imageUrl}')`;
+                
+                // 更新选中状态
+                document.querySelectorAll('.preset-image').forEach(img => {
+                    img.classList.remove('selected');
+                    if (img.getAttribute('data-url') === imageUrl) {
+                        img.classList.add('selected');
+                    }
+                });
+            }
+
+            // 处理图片上传
+            function handleImageUpload(event) {
+                const file = event.target.files[0];
+                
+                if (file) {
+                    // 验证文件类型
+                    if (!file.type.match('image.*')) {
+                        alert('请上传图片文件！');
+                        return;
+                    }
+                    
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        // 成功加载后设置背景图片
+                        setBackgroundImage(e.target.result);
+                        closeSettingsPanel();
+                        
+                        // 重置文件输入，允许重复上传同一文件
+                        event.target.value = '';
+                    };
+                    
+                    reader.onerror = function() {
+                        alert('图片读取失败，请重试！');
+                    };
+                    
+                    reader.readAsDataURL(file);
+                }
+            }
+            
+            // 设置随机背景图片
+            function setRandomBackground() {
+                const randomIndex = Math.floor(Math.random() * allPresetImages.length);
+                const randomImage = allPresetImages[randomIndex];
+                const imageUrl = randomImage.getAttribute('data-url');
+                setBackgroundImage(imageUrl);
+                
+                // 如果随机图片不在当前页，自动切换到对应页面
+                const imagePage = randomImage.closest('.preset-page').getAttribute('data-page');
+                if (imagePage != currentPage) {
+                    goToPage(parseInt(imagePage));
+                }
+            }
+            
+            // 为预设图片添加点击事件
+            presetImages.forEach(img => {
+                img.addEventListener('click', function() {
+                    const imageUrl = this.getAttribute('data-url');
+                    setBackgroundImage(imageUrl);
+                });
+            });
+            
+            // 为随机背景按钮添加点击事件
+            randomBackgroundButton.addEventListener('click', setRandomBackground);
+            
+            // 为图片上传添加事件监听
+            imageUpload.addEventListener('change', handleImageUpload);
+            
+            // 为设置按钮添加点击事件
+            settingsButton.addEventListener('click', toggleSettingsPanel);
+            
+            // 为关闭按钮添加点击事件
+            closePanelButton.addEventListener('click', closeSettingsPanel);
+            
+            // 分页功能实现 - 文字版分页
+            function updatePagination() {
+                // 更新页面显示
+                presetPages.forEach(page => {
+                    const pageNum = parseInt(page.getAttribute('data-page'));
+                    if (pageNum === currentPage) {
+                        page.classList.add('active');
+                    } else {
+                        page.classList.remove('active');
+                    }
+                });
+                
+                // 更新页码信息显示（当前页/总页数）
+                pageInfoElement.textContent = `${currentPage}/${totalPages}`;
+                
+                // 更新导航按钮状态
+                prevPageButton.disabled = currentPage === 1;
+                nextPageButton.disabled = currentPage === totalPages;
+            }
+            
+            // 跳转到指定页
+            function goToPage(pageNum) {
+                if (pageNum < 1 || pageNum > totalPages) return;
+                currentPage = pageNum;
+                updatePagination();
+            }
+            
+            // 上一页
+            prevPageButton.addEventListener('click', function() {
+                if (currentPage > 1) {
+                    goToPage(currentPage - 1);
+                }
+            });
+            
+            // 下一页
+            nextPageButton.addEventListener('click', function() {
+                if (currentPage < totalPages) {
+                    goToPage(currentPage + 1);
+                }
+            });
+            
+            // 初始化分页
+            updatePagination();
         });
     </script>
-</body>
-</html>
+    </div>
+</body></html>
