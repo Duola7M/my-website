@@ -723,14 +723,15 @@
                     box-sizing: border-box;
                     display: flex;
                     flex-direction: column;
-                    justify-content: space-between;
+                    justify-content: center;
+                    align-items: center;
                     flex-shrink: 0;
                 ">
-                    <div style="margin-bottom: 10px;">
+                    <div style="margin-bottom: 5px;">
                         <div style="
                             color: rgba(255, 255, 255, 0.8);
                             font-size: 0.9rem;
-                            margin-bottom: 5px;
+                            margin-bottom: 2px;
                         ">前缀</div>
                         <input type="text" id="prefix-input" value="image" style="
                             width: 100%;
@@ -743,12 +744,12 @@
                             box-sizing: border-box;
                         ">
                     </div>
-                    <div style="display: flex; gap: 10px;">
+                    <div style="display: flex; gap: 5px;">
                         <div style="flex: 1;">
                             <div style="
                                 color: rgba(255, 255, 255, 0.8);
                                 font-size: 0.9rem;
-                                margin-bottom: 5px;
+                                margin-bottom: 2px;
                             ">起始序号</div>
                             <input type="number" id="start-number" value="1" min="1" style="
                                 width: 100%;
@@ -765,7 +766,7 @@
                             <div style="
                                 color: rgba(255, 255, 255, 0.8);
                                 font-size: 0.9rem;
-                                margin-bottom: 5px;
+                                margin-bottom: 2px;
                             ">序号样式</div>
                             <select id="number-style" style="
                                 width: 100%;
@@ -812,7 +813,7 @@
                         font-size: 1rem;
                         font-weight: 500;
                         cursor: pointer;
-                        margin-bottom: 10px;
+                        margin-bottom: 5px;
                         transition: background-color 0.3s ease;
                     ">下载ZIP</button>
                     <button style="
@@ -835,15 +836,15 @@
         
         <!-- 预览窗口 -->
         <div class="glass-card">
-            <div class="window-content" style="display: flex; flex-direction: column; height: 100%; padding: 0;">
-                <!-- 预览标题 -->
-                <div style="
-                    padding: 20px 30px;
-                    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-                    text-align: center;
-                ">
-                    <h2 style="margin: 0; color: white;">预览</h2>
-                </div>
+              <div class="window-content" style="display: flex; flex-direction: column; height: 100%; padding: 0;">
+                  <!-- 预览标题 -->
+                  <div style="
+                      padding: 15px 20px;
+                      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+                      text-align: center;
+                  ">
+                      <h2 style="margin: 0; color: white;">预览</h2>
+                  </div>
                 
                 <!-- 预览列表区域 -->
                 <div id="preview-list" style="
